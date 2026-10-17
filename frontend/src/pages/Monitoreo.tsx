@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
-import { cultivoLabel, tipoEspacioLabel } from '../lib/catalog';
+import { centroDePais, cultivoLabel, tipoEspacioLabel } from '../lib/catalog';
 import { formatDateTime, formatNumber } from '../lib/format';
+import { validarUrl } from '../lib/validation';
 import type { MonitoringHistory, MonitoringResult } from '../lib/types';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button, ButtonLink } from '../components/ui/Button';
@@ -12,6 +13,7 @@ import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { EmptyState, ErrorBlock, LoadingBlock } from '../components/ui/Feedback';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
+import { LocationPicker } from '../components/LocationPicker';
 
 export function Monitoreo() {
   const [params, setParams] = useSearchParams();
@@ -23,8 +25,6 @@ export function Monitoreo() {
   const [cantidad, setCantidad] = useState('1');
   const [fotoUrl, setFotoUrl] = useState('');
   const [notas, setNotas] = useState('');
-  const [lat, setLat] = useState('');
-  const [lng, setLng] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [result, setResult] = useState<MonitoringResult | null>(null);
@@ -38,6 +38,17 @@ export function Monitoreo() {
   const selectedSpace = useMemo(
     () => spaceList.find((space) => space.id === espacioId) ?? null,
     [spaceList, espacioId]
+  );
+
+  // La foto es opcional, pero si se escribe debe ser una URL válida (formato original).
+  const foto = useMemo(() => validarUrl(fotoUrl), [fotoUrl]);
+  const fotoInvalida = !foto.valida;
+
+  // Ubicación del avistamiento: se hereda del mapa definido en la segmentación.
+  const coordenadasEspacio = selectedSpace?.coordenadas ?? null;
+  const encuadreEspacio = useMemo(
+    () => coordenadasEspacio ?? centroDePais(selectedSpace?.pais).centro,
+    [coordenadasEspacio, selectedSpace?.pais]
   );
 
   useEffect(() => {
@@ -70,6 +81,10 @@ export function Monitoreo() {
       setFormError('La cantidad debe ser un número mayor a 0.');
       return;
     }
+    if (fotoInvalida) {
+      setFormError('La foto debe ser una URL válida, por ejemplo https://misitio.com/foto.jpg');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -77,11 +92,10 @@ export function Monitoreo() {
         espacio_id: espacioId,
         polinizador_avistado: polinizador.trim(),
         cantidad: cantidadNum,
-        ...(fotoUrl.trim() ? { foto_url: fotoUrl.trim() } : {}),
+        ...(foto.url ? { foto_url: foto.url } : {}),
         ...(notas.trim() ? { notas: notas.trim() } : {}),
-        ...(lat.trim() && lng.trim() && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng))
-          ? { coordenadas: { lat: Number(lat), lng: Number(lng) } }
-          : {}),
+        // Se reutiliza la ubicación registrada en la segmentación.
+        ...(coordenadasEspacio ? { coordenadas: coordenadasEspacio } : {}),
       };
 
       const response = await api.registerMonitoring(payload);
@@ -107,7 +121,7 @@ export function Monitoreo() {
         eyebrow="Néctar Ciudadano"
         icon="🐝"
         title="Monitoreo de polinizadores"
-        description="Registra avistamientos de campo con foto y geolocalización opcional. Cada registro suma +15 puntos al espacio y actualiza su insignia."
+        description="Registra avistamientos de campo con foto (URL válida). Cada registro hereda la ubicación del espacio definida en la segmentación y suma +15 puntos."
         actions={<ButtonLink to="/ranking" variant="outlined">Ver ranking</ButtonLink>}
       />
 
@@ -186,35 +200,58 @@ export function Monitoreo() {
                 />
               </Field>
 
-              <Field label="Foto (URL)" htmlFor="foto" hint="Opcional">
+              <Field
+                label="Foto (URL)"
+                htmlFor="foto"
+                hint={
+                  fotoInvalida
+                    ? undefined
+                    : 'Opcional · URL directa de la foto (https://…). Se guarda tal como la escribes.'
+                }
+                error={
+                  fotoInvalida
+                    ? 'Escribe una URL válida con formato https://sitio.com/imagen.jpg'
+                    : null
+                }
+              >
                 <Input
                   id="foto"
+                  type="url"
+                  inputMode="url"
                   value={fotoUrl}
                   placeholder="https://…"
+                  aria-invalid={fotoInvalida}
                   onChange={(event) => setFotoUrl(event.target.value)}
                 />
               </Field>
-
-              <Field label="Latitud" htmlFor="lat" hint="Opcional">
-                <Input
-                  id="lat"
-                  inputMode="decimal"
-                  value={lat}
-                  placeholder="12.9255"
-                  onChange={(event) => setLat(event.target.value)}
-                />
-              </Field>
-
-              <Field label="Longitud" htmlFor="lng" hint="Opcional">
-                <Input
-                  id="lng"
-                  inputMode="decimal"
-                  value={lng}
-                  placeholder="-85.9178"
-                  onChange={(event) => setLng(event.target.value)}
-                />
-              </Field>
             </div>
+
+            <Field
+              label="Ubicación del avistamiento"
+              hint={
+                selectedSpace
+                  ? 'Se toma automáticamente del mapa que registraste en la segmentación.'
+                  : 'Elige un espacio para cargar su ubicación.'
+              }
+            >
+              {selectedSpace ? (
+                <LocationPicker
+                  key={selectedSpace.id}
+                  value={coordenadasEspacio}
+                  center={encuadreEspacio}
+                  zoom={14}
+                  readOnly
+                  onChange={() => undefined}
+                  referenceLabel={`${selectedSpace.nombre_espacio ?? 'Espacio'} · ${
+                    selectedSpace.departamento_municipio ?? 'sin municipio'
+                  }`}
+                />
+              ) : (
+                <p className="location-picker__empty">
+                  Aún no hay un espacio seleccionado.
+                </p>
+              )}
+            </Field>
 
             <Field label="Notas de campo" htmlFor="notas" hint="Opcional">
               <Textarea
@@ -227,7 +264,13 @@ export function Monitoreo() {
 
             {formError ? <Alert tone="danger">{formError}</Alert> : null}
 
-            <Button type="submit" variant="primary" block disabled={submitting} iconLeft="🐝">
+            <Button
+              type="submit"
+              variant="primary"
+              block
+              disabled={submitting || fotoInvalida}
+              iconLeft="🐝"
+            >
               {submitting ? 'Registrando…' : 'Registrar avistamiento (+15 pts)'}
             </Button>
           </form>
@@ -254,6 +297,27 @@ export function Monitoreo() {
                     <Badge tone="tertiary">🎉 ¡El espacio subió de nivel!</Badge>
                   ) : null}
                 </div>
+
+                {result.monitoreo.foto_url ? (
+                  <figure style={{ margin: 'var(--space-5) 0 0' }}>
+                    <img
+                      src={result.monitoreo.foto_url}
+                      alt={`Foto del avistamiento de ${result.monitoreo.polinizador_avistado}`}
+                      loading="lazy"
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        maxHeight: 260,
+                        objectFit: 'cover',
+                        borderRadius: 'var(--radius-sm)',
+                        border: '1px solid var(--border-default)',
+                      }}
+                    />
+                    <figcaption className="text-subtle" style={{ marginTop: 'var(--space-2)' }}>
+                      Foto registrada · {result.monitoreo.polinizador_avistado}
+                    </figcaption>
+                  </figure>
+                ) : null}
               </Alert>
             </div>
           ) : null}

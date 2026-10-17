@@ -15,12 +15,12 @@ const NAV_ITEMS = [
 
 function Brand() {
   return (
-    <Link to="/" className="brand" aria-label="Néctar LatAm, ir al inicio">
+    <Link to="/" className="brand" aria-label="Néctar, ir al inicio">
       <span className="brand__mark" aria-hidden>
         🐝
       </span>
       <span>
-        <span className="brand__name">Néctar LatAm</span>
+        <span className="brand__name">Néctar</span>
         <span className="brand__tag">Red de polinizadores</span>
       </span>
     </Link>
@@ -109,7 +109,7 @@ export function Layout() {
           </div>
 
           <div className="footer__bottom">
-            <span>© {new Date().getFullYear()} Néctar LatAm · Rally LatAm 2026</span>
+            <span>© {new Date().getFullYear()} Néctar · Rally LatAm 2026</span>
             <span>Un modelo, mil paisajes. Una red, todo un continente.</span>
           </div>
         </div>

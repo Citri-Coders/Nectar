@@ -8,7 +8,7 @@ export function NotFound() {
       <EmptyState
         icon="🧭"
         title="Ruta no encontrada"
-        description="La página que buscas no existe o cambió de ubicación. Vuelve al inicio o explora los módulos de Néctar LatAm."
+        description="La página que buscas no existe o cambió de ubicación. Vuelve al inicio o explora los módulos de Néctar."
         action={
           <div className="row row-wrap gap-3">
             <ButtonLink to="/" variant="primary">

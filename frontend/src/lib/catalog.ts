@@ -1,3 +1,5 @@
+import type { Coordinates } from './types';
+
 /** Opción con valor de API + etiqueta legible + emoji para las tarjetas. */
 export interface CatalogOption {
   value: string;
@@ -15,6 +17,61 @@ export const ZONAS: CatalogOption[] = [
   { value: 'periurbana', label: 'Periurbana', icon: '🌆', desc: 'Borde urbano-rural' },
   { value: 'rural', label: 'Rural', icon: '🌄', desc: 'Campo abierto' },
 ];
+
+/* -------------------------------------------------------------------------- */
+/* Selector de ubicación en mapa (Leaflet)                                    */
+/* -------------------------------------------------------------------------- */
+
+export interface PaisCentro {
+  centro: Coordinates;
+  zoom: number;
+}
+
+/** Centro geográfico aproximado de cada país soportado por la biblioteca nativa. */
+export const PAIS_CENTROS: Record<string, PaisCentro> = {
+  Nicaragua: { centro: { lat: 12.87, lng: -85.21 }, zoom: 7 },
+  Colombia: { centro: { lat: 4.57, lng: -74.3 }, zoom: 6 },
+  Brasil: { centro: { lat: -14.24, lng: -51.93 }, zoom: 4 },
+  Argentina: { centro: { lat: -38.42, lng: -63.62 }, zoom: 4 },
+  Bolivia: { centro: { lat: -16.29, lng: -63.59 }, zoom: 6 },
+  Chile: { centro: { lat: -35.68, lng: -71.54 }, zoom: 5 },
+  'Costa Rica': { centro: { lat: 9.75, lng: -83.75 }, zoom: 8 },
+  'El Salvador': { centro: { lat: 13.79, lng: -88.9 }, zoom: 9 },
+  México: { centro: { lat: 23.63, lng: -102.55 }, zoom: 5 },
+  Paraguay: { centro: { lat: -23.44, lng: -58.44 }, zoom: 6 },
+  Venezuela: { centro: { lat: 6.42, lng: -66.59 }, zoom: 6 },
+};
+
+/** Encuadre por defecto cuando aún no se elige país: vista de Latinoamérica. */
+export const CENTRO_LATAM: PaisCentro = { centro: { lat: 8, lng: -75 }, zoom: 4 };
+
+/** Centro y zoom del país elegido (o la vista regional si no hay país). */
+export function centroDePais(pais?: string | null): PaisCentro {
+  if (!pais) return CENTRO_LATAM;
+  return PAIS_CENTROS[pais] ?? CENTRO_LATAM;
+}
+
+/**
+ * País soportado más cercano a un punto del mapa, útil para sugerir el país
+ * cuando la persona marca su espacio lejos del centro del país seleccionado.
+ * Devuelve null si el punto queda a más de 4° de cualquier país soportado.
+ */
+export function paisMasCercano(coords: Coordinates): string | null {
+  let mejor: string | null = null;
+  let mejorDistancia = Number.POSITIVE_INFINITY;
+
+  for (const [pais, { centro }] of Object.entries(PAIS_CENTROS)) {
+    const dLat = coords.lat - centro.lat;
+    const dLng = coords.lng - centro.lng;
+    const distancia = dLat * dLat + dLng * dLng;
+    if (distancia < mejorDistancia) {
+      mejorDistancia = distancia;
+      mejor = pais;
+    }
+  }
+
+  return mejorDistancia <= 16 ? mejor : null; // 4° ≈ 445 km
+}
 
 /* -------------------------------------------------------------------------- */
 /* Paso 2 — Tipo de espacio                                                   */
@@ -113,5 +170,8 @@ export function emojiPorCultivo(cultivo?: string | null): string {
   return (cultivo && EMOJI_POR_CULTIVO[cultivo]) || '🐝';
 }
 
-/** Municipios sugeridos según las semillas del backend. */
-export const MUNICIPIOS_SUGERIDOS = ['Matagalpa', 'Pitalito, Huila'];
+/** Municipios sugeridos por país (respaldo si la API aún no responde). */
+export const MUNICIPIOS_SUGERIDOS_POR_PAIS: Record<string, string[]> = {
+  Nicaragua: ['Matagalpa'],
+  Colombia: ['Pitalito, Huila'],
+};

@@ -8,6 +8,7 @@ import type {
   MonitoringHistory,
   MonitoringInput,
   MonitoringResult,
+  MunicipioCatalogoPais,
   MunicipioDashboard,
   Producer,
   SealFicha,
@@ -115,13 +116,16 @@ export const api = {
     request<{ total: number; leaderboard: LeaderboardEntry[] }>('/gamification/leaderboard'),
 
   /* Municipio -------------------------------------------------------------- */
-  getMunicipioDashboard: (municipio: string) =>
+  getMunicipioCatalogo: () =>
+    request<ListResponse<MunicipioCatalogoPais>>('/municipio/catalogo'),
+
+  getMunicipioDashboard: (municipio: string, pais?: string) =>
     request<MunicipioDashboard>(
-      `/municipio/dashboard/${encodeURIComponent(municipio)}`
+      `/municipio/dashboard/${encodeURIComponent(municipio)}${query({ pais })}`
     ),
 
-  getMunicipioMapPoints: (municipio: string) =>
-    request<MapPoint[]>(`/municipio/map-points/${encodeURIComponent(municipio)}`),
+  getMunicipioMapPoints: (municipio: string, pais?: string) =>
+    request<MapPoint[]>(`/municipio/map-points/${encodeURIComponent(municipio)}${query({ pais })}`),
 
   /* Sello ------------------------------------------------------------------ */
   verifySeal: (idOSlug: string) =>

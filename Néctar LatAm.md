@@ -69,7 +69,7 @@ ID, Finca, Escala 1, Escala 2, Escala 3, Fecha.
 
 ### 7.1 Flujo del formulario
 
-**Paso 1 — Ubicación:** País, Departamento/Municipio, Zona (urbana, periurbana, rural).
+**Paso 1 — Ubicación:** País, Departamento/Municipio, Comunidad, Zona (urbana, periurbana, rural) y un mapa interactivo para marcar el punto exacto del espacio (sin escribir latitud y longitud a mano).
 
 **Paso 2 — Tipo de espacio:** Finca agrícola, Patio o jardín, Terraza o balcón, Escuela, Parque o rotonda, Área comunal.
 
@@ -91,8 +91,15 @@ ID, Finca, Escala 1, Escala 2, Escala 3, Fecha.
 |------|-------------------|-------------------|-----------------|
 | Nicaragua | Melipona beecheii, Trigona fulviventris | Xylocopa, Centris | Madero negro, Sacuanjoche, Flor de izote |
 | Colombia | Melipona compressipes, Tetragonisca angustula | Xylocopa, Centris | Guayacán, Carbonero, Chicalá |
-| Perú | Melipona rufiventris, Scaptotrigona | Xylocopa, Centris | Molle, Huaranhuay, Tara |
 | Brasil | Melipona quadrifasciata, Tetragonisca | Xylocopa, Centris | Ipê, Aroeira, Jacarandá |
+| Argentina | Tetragonisca fiebrigi, Scaptotrigona jujuyensis | Xylocopa, Centris | Lapacho, Ceibo, Algarrobo |
+| Bolivia | Tetragonisca angustula, Melipona rufiventris | Xylocopa, Centris | Lapacho, Molle, Tara |
+| Chile | Manuelia postica, Manuelia gayi | Centris, Colletes | Quillay, Peumo, Boldo |
+| Costa Rica | Melipona beecheii, Tetragonisca angustula | Xylocopa, Centris | Poró, Guayacán real, Malinche |
+| El Salvador | Melipona beecheii, Trigona fulviventris | Xylocopa, Centris | Maquilishuat, Flor de izote, Bálsamo |
+| México | Melipona beecheii, Scaptotrigona pectoralis | Xylocopa, Centris | Guayacán, Primavera, Árbol de las manitas |
+| Paraguay | Tetragonisca fiebrigi, Scaptotrigona | Xylocopa, Centris | Lapacho, Yvyra pytã, Guayabo |
+| Venezuela | Melipona favosa, Tetragonisca angustula | Xylocopa, Centris | Araguaney, Bucare, Apamate |
 
 ---
 
@@ -152,7 +159,8 @@ El blog incluye artículos, guías y videos cortos. Contenidos base:
 - **Nicaragua:** Néctar Café en Matagalpa.
 - **Colombia:** Néctar Café en Huila (especies locales).
 - **Brasil:** Néctar Café en Minas Gerais (portugués).
-- **Perú:** Néctar Cacao en San Martín (moscas de las flores).
+- **Argentina, Bolivia, Chile, Paraguay y Venezuela:** pilotos de Néctar Café y Néctar Frutales con meliponas y abejas solitarias del Cono Sur.
+- **Costa Rica, El Salvador y México:** Néctar Café y Néctar Cacao con meliponas locales (Melipona beecheii).
 
 **El método es el mismo. El contenido se adapta.**
 

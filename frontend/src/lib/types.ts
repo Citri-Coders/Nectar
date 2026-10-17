@@ -176,6 +176,16 @@ export interface MunicipioDashboard {
   conectividad_detalle: ConectividadComponentes;
 }
 
+export interface MunicipioCatalogoItem {
+  nombre: string;
+  espacios: number;
+}
+
+export interface MunicipioCatalogoPais {
+  pais: string;
+  municipios: MunicipioCatalogoItem[];
+}
+
 export interface MapPoint {
   id: string;
   nombre: string | null;

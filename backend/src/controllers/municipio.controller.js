@@ -1,6 +1,10 @@
 import { listSpaces } from '../data/spacesData.js';
 import { listMonitoring } from '../data/monitoringData.js';
 import { calcularConectividadDetalle } from '../services/connectivity.service.js';
+import {
+  findCountryKey,
+  getSupportedCountries,
+} from '../services/recommendation.service.js';
 
 function normalize(value) {
   return String(value ?? '')
@@ -10,19 +14,70 @@ function normalize(value) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
+function isBlank(value) {
+  return value === undefined || value === null || String(value).trim() === '';
+}
+
+// Resuelve el país de la consulta: solo se aceptan los países soportados.
+function resolvePaisFiltro(value) {
+  if (isBlank(value)) return { paisKey: null, error: null };
+
+  const paisKey = findCountryKey(value);
+  if (!paisKey) {
+    return {
+      paisKey: null,
+      error: `El país "${value}" no está soportado para consultar municipios.`,
+    };
+  }
+
+  return { paisKey, error: null };
+}
+
 // Busca los espacios cuyo municipio coincide (exacto o parcial, sin tildes).
-function findMunicipioSpaces(nombreMunicipio) {
+// Si se indica un país soportado, la búsqueda se restringe a ese país.
+function findMunicipioSpaces(nombreMunicipio, paisKey = null) {
   const objetivo = normalize(nombreMunicipio);
   if (!objetivo) return [];
 
   return listSpaces().filter((space) => {
+    if (paisKey && space.pais !== paisKey) return false;
     const municipio = normalize(space.departamento_municipio);
     return Boolean(municipio) && (municipio === objetivo || municipio.includes(objetivo));
   });
 }
 
-function municipiosDisponibles() {
-  return [...new Set(listSpaces().map((space) => space.departamento_municipio).filter(Boolean))];
+function municipiosDisponibles(paisKey = null) {
+  return [
+    ...new Set(
+      listSpaces()
+        .filter((space) => !paisKey || space.pais === paisKey)
+        .map((space) => space.departamento_municipio)
+        .filter(Boolean)
+    ),
+  ];
+}
+
+// GET /api/v1/municipio/catalogo
+// Devuelve los municipios con datos agrupados por país, limitado a los países
+// soportados por la biblioteca de especies nativas.
+export function getMunicipioCatalogo(req, res) {
+  const espacios = listSpaces();
+
+  const data = getSupportedCountries().map((pais) => {
+    const delPais = espacios.filter((space) => space.pais === pais);
+    const nombres = [...new Set(delPais.map((space) => space.departamento_municipio).filter(Boolean))];
+
+    const municipios = nombres
+      .sort((a, b) => a.localeCompare(b, 'es'))
+      .map((nombre) => ({
+        nombre,
+        espacios: delPais.filter((space) => space.departamento_municipio === nombre).length,
+      }));
+
+    return { pais, municipios };
+  });
+
+  return res.json({ total: data.length, data });
 }
 
 // Agrupa los espacios por comunidad y los ordena por puntos totales.
@@ -40,15 +95,25 @@ function buildRankingComunidades(spaces) {
   return [...porComunidad.values()].sort((a, b) => b.puntos_totales - a.puntos_totales);
 }
 
-// GET /api/v1/municipio/dashboard/:nombre_municipio
+// GET /api/v1/municipio/dashboard/:nombre_municipio?pais=Nicaragua
 export function getMunicipioDashboard(req, res) {
   const { nombre_municipio: nombreMunicipio } = req.params;
-  const spaces = findMunicipioSpaces(nombreMunicipio);
+  const { paisKey, error } = resolvePaisFiltro(req.query.pais);
+
+  if (error) {
+    return res.status(400).json({ message: error, paises_disponibles: getSupportedCountries() });
+  }
+
+  const spaces = findMunicipioSpaces(nombreMunicipio, paisKey);
 
   if (spaces.length === 0) {
     return res.status(404).json({
-      message: `No hay espacios registrados en el municipio "${nombreMunicipio}".`,
-      municipios_disponibles: municipiosDisponibles(),
+      message: paisKey
+        ? `No hay espacios registrados en el municipio "${nombreMunicipio}" de ${paisKey}.`
+        : `No hay espacios registrados en el municipio "${nombreMunicipio}".`,
+      pais: paisKey,
+      paises_disponibles: getSupportedCountries(),
+      municipios_disponibles: municipiosDisponibles(paisKey),
     });
   }
 
@@ -79,15 +144,25 @@ export function getMunicipioDashboard(req, res) {
   });
 }
 
-// GET /api/v1/municipio/map-points/:nombre_municipio
+// GET /api/v1/municipio/map-points/:nombre_municipio?pais=Nicaragua
 export function getMunicipioMapPoints(req, res) {
   const { nombre_municipio: nombreMunicipio } = req.params;
-  const spaces = findMunicipioSpaces(nombreMunicipio);
+  const { paisKey, error } = resolvePaisFiltro(req.query.pais);
+
+  if (error) {
+    return res.status(400).json({ message: error, paises_disponibles: getSupportedCountries() });
+  }
+
+  const spaces = findMunicipioSpaces(nombreMunicipio, paisKey);
 
   if (spaces.length === 0) {
     return res.status(404).json({
-      message: `No hay espacios registrados en el municipio "${nombreMunicipio}".`,
-      municipios_disponibles: municipiosDisponibles(),
+      message: paisKey
+        ? `No hay espacios registrados en el municipio "${nombreMunicipio}" de ${paisKey}.`
+        : `No hay espacios registrados en el municipio "${nombreMunicipio}".`,
+      pais: paisKey,
+      paises_disponibles: getSupportedCountries(),
+      municipios_disponibles: municipiosDisponibles(paisKey),
     });
   }
 

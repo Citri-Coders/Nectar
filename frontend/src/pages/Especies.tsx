@@ -37,7 +37,7 @@ export function Especies() {
         eyebrow="Néctar Diseño"
         icon="🧭"
         title="Biblioteca de especies nativas"
-        description="Abejas sin aguijón, abejas solitarias y catálogo de plantas nativas por país con su aptitud por piso climático. Fuente: tabla 7.2 de la metodología Néctar LatAm."
+        description="Abejas sin aguijón, abejas solitarias y catálogo de plantas nativas por país con su aptitud por piso climático. Fuente: tabla 7.2 de la metodología Néctar."
         actions={
           <div style={{ minWidth: 220 }}>
             <Field label="Filtrar por piso climático" htmlFor="piso">

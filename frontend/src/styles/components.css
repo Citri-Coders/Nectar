@@ -1035,6 +1035,104 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* Selector de ubicación (mapa interactivo del paso 1)                        */
+/* -------------------------------------------------------------------------- */
+
+.location-picker {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.location-picker__frame {
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  background: var(--bg-subtle);
+}
+
+.location-picker__canvas {
+  height: 320px;
+  width: 100%;
+  cursor: crosshair;
+}
+
+.location-picker__canvas--readonly {
+  cursor: default;
+}
+
+.location-picker__hint {
+  position: absolute;
+  top: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  background: rgba(27, 27, 23, 0.78);
+  color: #fff;
+  font-size: var(--text-xs);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.location-picker__badge {
+  position: absolute;
+  right: var(--space-3);
+  bottom: var(--space-3);
+  z-index: 500;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-soft);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  pointer-events: none;
+}
+
+.pin--picker {
+  background: var(--primary-600);
+}
+
+.location-picker__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.location-picker__coords {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--primary-50);
+  color: var(--primary-700);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.location-picker__coords-sep {
+  color: var(--primary-400);
+}
+
+.location-picker__empty {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 640px) {
+  .location-picker__canvas {
+    height: 260px;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /* Sello                                                                      */
 /* -------------------------------------------------------------------------- */
 

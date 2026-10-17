@@ -11,7 +11,6 @@ const PRECIO_SUGERIDO_POR_M2 = 0.5; // USD por metro cuadrado (si no lo envían)
 function isBlank(value) {
   return value === undefined || value === null || String(value).trim() === '';
 }
-
 // Arma la ficha pública de trazabilidad a partir de la certificación y el espacio.
 function buildFicha(cert, space) {
   const metrosAdoptados = getAdoptedM2(cert.espacio_id);
@@ -71,6 +70,14 @@ export function adoptHabitat(req, res) {
     });
   }
 
+  // El monto a pagar nunca puede ser negativo.
+  if (!isBlank(body.monto_usd) && (!Number.isFinite(Number(body.monto_usd)) || Number(body.monto_usd) < 0)) {
+    return res.status(400).json({
+      message: 'El campo "monto_usd" debe ser un número mayor o igual a 0.',
+      campo: 'monto_usd',
+    });
+  }
+
   const space = findSpaceById(body.espacio_id);
   if (!space) {
     return res.status(404).json({
@@ -87,9 +94,9 @@ export function adoptHabitat(req, res) {
     });
   }
 
-  const monto = Number.isFinite(Number(body.monto_usd))
-    ? Number(body.monto_usd)
-    : Number((metros * PRECIO_SUGERIDO_POR_M2).toFixed(2));
+  const monto = isBlank(body.monto_usd)
+    ? Number((metros * PRECIO_SUGERIDO_POR_M2).toFixed(2))
+    : Number(body.monto_usd);
 
   const adopcion = createAdoption({
     ...body,

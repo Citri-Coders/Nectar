@@ -1,6 +1,7 @@
 import {
   getSupportedCountries,
   findCountryKey,
+  normalizeEnum,
 } from '../services/recommendation.service.js';
 import {
   createSpace,
@@ -64,7 +65,9 @@ export function getAllSpaces(req, res) {
   }
 
   if (!isBlank(tipo)) {
-    const tipoBuscado = String(tipo).trim().toLowerCase();
+    // normalizeEnum unifica mayúsculas, tildes y espacios ("Finca Agrícola"
+    // -> "finca_agricola") para que el filtro no falle por formato.
+    const tipoBuscado = normalizeEnum(tipo);
     data = data.filter((space) => space.tipo_espacio === tipoBuscado);
   }
 

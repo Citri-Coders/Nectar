@@ -39,4 +39,48 @@ app.use('/api/v1/municipio', municipioRoutes);
 // Rutas del Sello "Polinizador Amigo" (trazabilidad QR + adopciones)
 app.use('/api/v1/seal', sealRoutes);
 
+// Índice de la API: ayuda a descubrir los endpoints disponibles.
+app.get('/api/v1', (req, res) => {
+  res.json({
+    name: 'Néctar LatAm API',
+    version: 'v1',
+    endpoints: [
+      'GET  /api/v1/health',
+      'GET  /api/v1/species[?pais=]',
+      'GET  /api/v1/spaces[?pais=&tipo=]',
+      'POST /api/v1/spaces/segmentation',
+      'GET  /api/v1/spaces/:id',
+      'POST /api/v1/monitoring',
+      'GET  /api/v1/monitoring/space/:espacio_id',
+      'GET  /api/v1/gamification/leaderboard',
+      'GET  /api/v1/municipio/catalogo',
+      'GET  /api/v1/municipio/dashboard/:nombre_municipio[?pais=]',
+      'GET  /api/v1/municipio/map-points/:nombre_municipio[?pais=]',
+      'GET  /api/v1/seal/producers',
+      'GET  /api/v1/seal/verify/:id_o_slug',
+      'POST /api/v1/seal/adopt',
+    ],
+  });
+});
+
+// 404 en JSON para cualquier endpoint desconocido: evita que el cliente reciba
+// HTML y no pueda interpretar el error.
+app.use((req, res) => {
+  res.status(404).json({
+    message: `No existe el endpoint "${req.method} ${req.originalUrl}".`,
+    api_index: '/api/v1',
+  });
+});
+
+// Manejador de errores centralizado: cualquier excepción no controlada
+// responde siempre en JSON (y no con el HTML por defecto de Express).
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, next) => {
+  const status = Number(err?.status) || 500;
+  if (status >= 500) console.error('[error]', err);
+  res.status(status).json({
+    message: err?.message || 'Error interno del servidor.',
+  });
+});
+
 export default app;

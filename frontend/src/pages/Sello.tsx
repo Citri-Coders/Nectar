@@ -40,9 +40,11 @@ export function Sello() {
   );
 
   const metrosNum = Number(metros);
+  const montoNum = Number(monto);
+  const montoInvalido = monto.trim() !== '' && (!Number.isFinite(montoNum) || montoNum < 0);
   const estimado =
-    monto.trim() !== '' && Number.isFinite(Number(monto))
-      ? Number(monto)
+    monto.trim() !== '' && Number.isFinite(montoNum) && montoNum >= 0
+      ? montoNum
       : Number.isFinite(metrosNum)
         ? Number((metrosNum * PRECIO_POR_M2).toFixed(2))
         : 0;
@@ -82,6 +84,10 @@ export function Sello() {
       setFormError('Los metros cuadrados deben ser un número mayor a 0.');
       return;
     }
+    if (monto.trim() !== '' && (!Number.isFinite(montoNum) || montoNum < 0)) {
+      setFormError('El monto a pagar no puede ser negativo. Usa 0 o un valor mayor.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -90,7 +96,7 @@ export function Sello() {
         nombre_consumidor: nombre.trim(),
         metros_cuadrados: metrosNum,
         ...(email.trim() ? { email: email.trim() } : {}),
-        ...(monto.trim() && Number.isFinite(Number(monto)) ? { monto_usd: Number(monto) } : {}),
+        ...(monto.trim() && Number.isFinite(montoNum) && montoNum >= 0 ? { monto_usd: montoNum } : {}),
         ...(mensaje.trim() ? { mensaje_apoyo: mensaje.trim() } : {}),
       });
       setResult(response);
@@ -152,7 +158,7 @@ export function Sello() {
               <div>
                 <div className="seal-badge__bee">🐝</div>
                 <div className="seal-badge__name">Polinizador Amigo</div>
-                <div className="seal-badge__folio">Néctar LatAm · LatAm</div>
+                <div className="seal-badge__folio">Néctar</div>
               </div>
             </div>
           </div>
@@ -309,11 +315,16 @@ export function Sello() {
                   label="Monto (USD)"
                   htmlFor="monto"
                   hint="Opcional · si lo dejas vacío se calcula a $0.50 por m²"
+                  error={montoInvalido ? 'El monto no puede ser negativo.' : null}
                 >
                   <Input
                     id="monto"
+                    type="number"
                     inputMode="decimal"
+                    min={0}
+                    step="0.01"
                     value={monto}
+                    aria-invalid={montoInvalido}
                     placeholder={`${(Number.isFinite(metrosNum) ? metrosNum * PRECIO_POR_M2 : 0).toFixed(2)}`}
                     onChange={(event) => setMonto(event.target.value)}
                   />
@@ -342,7 +353,13 @@ export function Sello() {
 
               {formError ? <Alert tone="danger">{formError}</Alert> : null}
 
-              <Button type="submit" variant="primary" block disabled={submitting} iconLeft="🌼">
+              <Button
+                type="submit"
+                variant="primary"
+                block
+                disabled={submitting || montoInvalido}
+                iconLeft="🌼"
+              >
                 {submitting ? 'Registrando adopción…' : 'Confirmar adopción'}
               </Button>
             </form>

@@ -91,7 +91,7 @@ export function Home() {
             Un modelo, mil paisajes.
           </h1>
           <p className="hero__lead">
-            Néctar LatAm conecta comunidades, productores y municipios para conservar los
+            Néctar conecta comunidades, productores y municipios para conservar los
             polinizadores nativos y la agroecología en Latinoamérica. Diseñamos, monitoreamos,
             certificamos y financiamos hábitats florales.
           </p>
@@ -129,7 +129,7 @@ export function Home() {
         </div>
       </section>
 
-      {loading ? <LoadingBlock label="Conectando con la API Néctar LatAm…" /> : null}
+      {loading ? <LoadingBlock label="Conectando con la API Néctar…" /> : null}
       {error ? <ErrorBlock message={error} onRetry={reload} /> : null}
 
       {/* ------------------------------------------------------------- Módulos */}

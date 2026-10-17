@@ -7,12 +7,14 @@ import {
   PRACTICAS,
   TIPOS_ESPACIO,
   ZONAS,
+  centroDePais,
   cultivoLabel,
+  paisMasCercano,
   pisoLabel,
   tipoEspacioLabel,
 } from '../lib/catalog';
 import { formatNumber, grupoLabel } from '../lib/format';
-import type { Space, SpaceInput } from '../lib/types';
+import type { Coordinates, Space, SpaceInput } from '../lib/types';
 import { PageHeader, Stepper } from '../components/ui/PageHeader';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
@@ -20,6 +22,7 @@ import { Badge, Chip } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { ErrorBlock } from '../components/ui/Feedback';
 import { CheckOption, Field, Input, OptionGrid, Select } from '../components/ui/Form';
+import { LocationPicker } from '../components/LocationPicker';
 
 const STEPS = ['Ubicación', 'Espacio', 'Cultivo', 'Clima', 'Resultado'];
 
@@ -33,8 +36,7 @@ interface FormState {
   cultivo_vegetacion: string;
   piso_climatico: string;
   practicas: string[];
-  lat: string;
-  lng: string;
+  coordenadas: Coordinates | null;
 }
 
 const INITIAL: FormState = {
@@ -47,8 +49,7 @@ const INITIAL: FormState = {
   cultivo_vegetacion: '',
   piso_climatico: '',
   practicas: [],
-  lat: '',
-  lng: '',
+  coordenadas: null,
 };
 
 export function Segmentacion() {
@@ -65,6 +66,16 @@ export function Segmentacion() {
     () => (countries.data?.data ?? []).map((item) => item.pais),
     [countries.data]
   );
+
+  // El mapa se encuadra en el país elegido (vista regional si aún no hay país).
+  const encuadre = useMemo(() => centroDePais(form.pais), [form.pais]);
+
+  // Sugerencia: si el punto marcado está cerca de otro país soportado, lo proponemos.
+  const paisSugerido = useMemo(() => {
+    if (!form.coordenadas) return null;
+    const cercano = paisMasCercano(form.coordenadas);
+    return cercano && cercano !== form.pais ? cercano : null;
+  }, [form.coordenadas, form.pais]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -107,11 +118,6 @@ export function Segmentacion() {
     setSubmitError(null);
     setMissingFields([]);
 
-    const lat = Number(form.lat);
-    const lng = Number(form.lng);
-    const hasCoords =
-      form.lat.trim() !== '' && form.lng.trim() !== '' && Number.isFinite(lat) && Number.isFinite(lng);
-
     const payload: SpaceInput = {
       nombre_espacio: form.nombre_espacio.trim(),
       pais: form.pais,
@@ -125,7 +131,7 @@ export function Segmentacion() {
     if (form.comunidad.trim()) payload.comunidad = form.comunidad.trim();
     if (form.zona) payload.zona = form.zona;
     if (form.practicas.length) payload.practicas = form.practicas;
-    if (hasCoords) payload.coordenadas = { lat, lng };
+    if (form.coordenadas) payload.coordenadas = form.coordenadas;
 
     try {
       const space = await api.createSpace(payload);
@@ -244,26 +250,36 @@ export function Segmentacion() {
               />
             </Field>
 
-            <div className="grid grid-2">
-              <Field label="Latitud" htmlFor="lat" hint="Opcional · para aparecer en el mapa municipal.">
-                <Input
-                  id="lat"
-                  inputMode="decimal"
-                  value={form.lat}
-                  placeholder="12.9255"
-                  onChange={(event) => update('lat', event.target.value)}
-                />
-              </Field>
-              <Field label="Longitud" htmlFor="lng" hint="Opcional · coordenada decimal (negativa en América).">
-                <Input
-                  id="lng"
-                  inputMode="decimal"
-                  value={form.lng}
-                  placeholder="-85.9178"
-                  onChange={(event) => update('lng', event.target.value)}
-                />
-              </Field>
-            </div>
+            <Field
+              label="Ubicación del espacio en el mapa"
+              hint="Toca el mapa o arrastra el pin para ubicar tu espacio. Opcional: lo hace visible en el mapa municipal."
+            >
+              <LocationPicker
+                value={form.coordenadas}
+                center={encuadre.centro}
+                zoom={encuadre.zoom}
+                onChange={(coords) => update('coordenadas', coords)}
+                referenceLabel={form.pais ? `País seleccionado: ${form.pais}` : undefined}
+              />
+            </Field>
+
+            {paisSugerido ? (
+              <Alert tone="info" title={`El punto marcado está cerca de ${paisSugerido}`}>
+                <p>
+                  Tu país seleccionado es {form.pais}. ¿Quieres usar {paisSugerido} para ajustar la
+                  biblioteca de especies nativas?
+                </p>
+                <div className="row gap-3" style={{ marginTop: 'var(--space-3)' }}>
+                  <Button
+                    variant="outlined"
+                    size="sm"
+                    onClick={() => update('pais', paisSugerido)}
+                  >
+                    Sí, usar {paisSugerido}
+                  </Button>
+                </div>
+              </Alert>
+            ) : null}
           </div>
         ) : null}
 

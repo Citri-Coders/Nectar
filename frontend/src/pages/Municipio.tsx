@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
-import { MUNICIPIOS_SUGERIDOS } from '../lib/catalog';
+import { MUNICIPIOS_SUGERIDOS_POR_PAIS } from '../lib/catalog';
 import { formatNumber, formatPercent } from '../lib/format';
 import type { Coordinates } from '../lib/types';
 import { MapView } from '../components/MapView';
@@ -12,27 +12,52 @@ import { Badge } from '../components/ui/Badge';
 import { Meter, ProgressBar, Stat } from '../components/ui/DataDisplay';
 import { Alert } from '../components/ui/Alert';
 import { ErrorBlock, LoadingBlock } from '../components/ui/Feedback';
-import { Field, Input } from '../components/ui/Form';
+import { Field, Input, Select } from '../components/ui/Form';
 
-const DEFAULT_MUNICIPIO = 'Matagalpa';
+const PAIS_INICIAL = 'Nicaragua';
+const MUNICIPIO_INICIAL = 'Matagalpa';
+
+/** Compara nombres de municipios sin distinguir mayúsculas ni tildes. */
+function normalizar(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
 
 export function Municipio() {
-  const [draft, setDraft] = useState(DEFAULT_MUNICIPIO);
-  const [municipio, setMunicipio] = useState(DEFAULT_MUNICIPIO);
+  const species = useApi(() => api.getSpecies(), []);
+  const catalogo = useApi(() => api.getMunicipioCatalogo(), []);
 
-  const spaces = useApi(() => api.getSpaces(), []);
+  const [pais, setPais] = useState(PAIS_INICIAL);
+  const [draftPais, setDraftPais] = useState(PAIS_INICIAL);
+  const [municipio, setMunicipio] = useState(MUNICIPIO_INICIAL);
+  const [draft, setDraft] = useState(MUNICIPIO_INICIAL);
+  const [aviso, setAviso] = useState<string | null>(null);
+
   const dashboard = useApi(
-    () => api.getMunicipioDashboard(municipio),
-    [municipio]
+    () => api.getMunicipioDashboard(municipio, pais),
+    [municipio, pais]
   );
-  const mapPoints = useApi(() => api.getMunicipioMapPoints(municipio), [municipio]);
+  const mapPoints = useApi(() => api.getMunicipioMapPoints(municipio, pais), [municipio, pais]);
 
-  const municipiosDisponibles = useMemo(() => {
-    const fromSpaces = (spaces.data?.data ?? [])
-      .map((space) => space.departamento_municipio)
-      .filter((value): value is string => Boolean(value));
-    return [...new Set([...MUNICIPIOS_SUGERIDOS, ...fromSpaces])];
-  }, [spaces.data]);
+  /** Países permitidos: los soportados por la biblioteca de especies nativas. */
+  const paises = useMemo(
+    () => (species.data?.data ?? []).map((item) => item.pais),
+    [species.data]
+  );
+
+  const catalogoPaises = catalogo.data?.data ?? [];
+
+  /** Municipios con datos del país elegido en el formulario de consulta. */
+  const municipiosDelPais = useMemo(() => {
+    const delCatalogo =
+      catalogoPaises.find((item) => item.pais === draftPais)?.municipios.map((item) => item.nombre) ??
+      [];
+    const respaldo = MUNICIPIOS_SUGERIDOS_POR_PAIS[draftPais] ?? [];
+    return [...new Set([...delCatalogo, ...respaldo])];
+  }, [catalogoPaises, draftPais]);
 
   const kpis = dashboard.data?.kpis;
   const puntos = mapPoints.data ?? [];
@@ -49,11 +74,43 @@ export function Municipio() {
     ...(dashboard.data?.ranking_comunidades ?? []).map((item) => item.puntos_totales)
   );
 
-  function consultar(value: string) {
-    const limpio = value.trim();
-    if (!limpio) return;
-    setDraft(limpio);
-    setMunicipio(limpio);
+  function cambiarPais(nuevoPais: string) {
+    setDraftPais(nuevoPais);
+    setAviso(null);
+    const lista =
+      catalogoPaises.find((item) => item.pais === nuevoPais)?.municipios.map((item) => item.nombre) ??
+      [];
+    setDraft(lista[0] ?? '');
+  }
+
+  function consultar(valor: string = draft) {
+    const nombre = valor.trim();
+    if (!nombre) {
+      setAviso('Escribe el municipio que quieres consultar.');
+      return;
+    }
+
+    const existe = municipiosDelPais.some((item) => normalizar(item) === normalizar(nombre));
+    if (!existe) {
+      setAviso(
+        `"${nombre}" no es un municipio con datos de ${draftPais}. Solo puedes consultar los municipios de los países permitidos.`
+      );
+      return;
+    }
+
+    setAviso(null);
+    setDraft(nombre);
+    setPais(draftPais);
+    setMunicipio(nombre);
+  }
+
+  /** Salta directo a un municipio ya validado (chips y atajos). */
+  function irA(paisDestino: string, municipioDestino: string) {
+    setAviso(null);
+    setDraftPais(paisDestino);
+    setDraft(municipioDestino);
+    setPais(paisDestino);
+    setMunicipio(municipioDestino);
   }
 
   return (
@@ -62,42 +119,71 @@ export function Municipio() {
         eyebrow="Néctar Municipio · Autoridades"
         icon="🏛️"
         title="Dashboard municipal"
-        description="Indicadores de avance, conectividad de microcuenca, ranking de comunidades y mapa territorial de los espacios registrados."
+        description="Indicadores de avance, conectividad de microcuenca, ranking de comunidades y mapa territorial. Consulta los municipios de los países permitidos (Nicaragua, Colombia, Brasil, Chile, Costa Rica, Venezuela, El Salvador, México, Paraguay, Bolivia y Argentina)."
         actions={
           <form
-            className="row gap-2"
+            className="row row-wrap gap-2"
             style={{ minWidth: 320 }}
             onSubmit={(event) => {
               event.preventDefault();
-              consultar(draft);
+              consultar();
             }}
           >
+            <Field htmlFor="pais-buscar">
+              <Select
+                id="pais-buscar"
+                aria-label="País del municipio"
+                value={draftPais}
+                onChange={(event) => cambiarPais(event.target.value)}
+                style={{ minWidth: 160 }}
+              >
+                {paises.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </Select>
+            </Field>
             <Field htmlFor="municipio-buscar">
               <Input
                 id="municipio-buscar"
                 aria-label="Municipio a consultar"
                 list="municipios"
                 value={draft}
-                placeholder="Ej. Matagalpa"
+                placeholder={municipiosDelPais[0] ?? 'Ej. Matagalpa'}
                 onChange={(event) => setDraft(event.target.value)}
                 style={{ minWidth: 220 }}
               />
               <datalist id="municipios">
-                {municipiosDisponibles.map((item) => (
+                {municipiosDelPais.map((item) => (
                   <option key={item} value={item} />
                 ))}
               </datalist>
             </Field>
-            <Button type="submit" variant="primary" iconLeft="🔍">
+            <Button
+              type="submit"
+              variant="primary"
+              iconLeft="🔍"
+              disabled={catalogo.loading || municipiosDelPais.length === 0}
+            >
               Consultar
             </Button>
           </form>
         }
       />
 
+      {aviso ? (
+        <div style={{ marginBottom: 'var(--space-5)' }}>
+          <Alert tone="warning" title="Municipio no disponible">
+            {aviso}
+          </Alert>
+        </div>
+      ) : null}
+
       <div className="row row-wrap gap-2" style={{ marginBottom: 'var(--space-6)' }}>
-        <span className="text-subtle">Sugerencias:</span>
-        {municipiosDisponibles.slice(0, 6).map((item) => (
+        <span className="text-subtle">Municipios de {draftPais}:</span>
+        {catalogo.loading ? <span className="text-subtle">cargando…</span> : null}
+        {municipiosDelPais.map((item) => (
           <button
             key={item}
             type="button"
@@ -108,6 +194,11 @@ export function Municipio() {
             {item}
           </button>
         ))}
+        {!catalogo.loading && municipiosDelPais.length === 0 ? (
+          <span className="text-subtle">
+            Aún no hay municipios registrados en {draftPais}.
+          </span>
+        ) : null}
       </div>
 
       {dashboard.loading ? <LoadingBlock label={`Cargando dashboard de ${municipio}…`} /> : null}
@@ -117,17 +208,24 @@ export function Municipio() {
           <ErrorBlock message={dashboard.error} onRetry={dashboard.reload} />
           <Alert tone="info" title="Municipios con datos disponibles">
             <div className="tag-list" style={{ marginTop: 'var(--space-3)' }}>
-              {municipiosDisponibles.map((item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className="badge badge--primary"
-                  onClick={() => consultar(item)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {item}
-                </button>
-              ))}
+              {catalogoPaises
+                .filter((item) => item.municipios.length > 0)
+                .map((item) => (
+                  <span key={item.pais} className="stack stack-sm">
+                    <span className="text-subtle">{item.pais}</span>
+                    {item.municipios.map((municipioItem) => (
+                      <button
+                        key={`${item.pais}-${municipioItem.nombre}`}
+                        type="button"
+                        className="badge badge--primary"
+                        onClick={() => irA(item.pais, municipioItem.nombre)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {municipioItem.nombre}
+                      </button>
+                    ))}
+                  </span>
+                ))}
             </div>
           </Alert>
         </div>
