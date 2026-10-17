@@ -3,7 +3,7 @@
   "services": {
     "backend": {
       "root": "backend/",
-      "entrypoint": "src/index.js" 
+      "entrypoint": "server.js"
     },
     "frontend": {
       "root": "frontend/"
