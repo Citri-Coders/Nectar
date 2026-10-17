@@ -1,11 +1,25 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install && npm --prefix frontend install --include=dev",
-  "buildCommand": "npm --prefix frontend run build && node scripts/copy-frontend.mjs",
-  "functions": {
-    "index.js": {
-      "includeFiles": "backend/db/**"
+  "services": {
+    "frontend": {
+      "root": "frontend/"
+    },
+    "backend": {
+      "root": "backend/"
     }
   },
-  "rewrites": [{ "source": "/:path((?!api).*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "backend"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
 }
