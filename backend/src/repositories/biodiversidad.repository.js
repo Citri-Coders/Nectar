@@ -1,9 +1,9 @@
 // ============================================================================
-// Repositorio de biodiversidad: consultas a la base SQLite.
+// Repositorio de biodiversidad: consultas a la base de datos (Turso / SQLite).
 // Jerarquía: PAÍS > MUNICIPIO > POLINIZADOR (aves, abejas, mamíferos).
 // ============================================================================
 
-import { getDb, isDatabaseAvailable } from '../db/database.js';
+import { queryOne, queryAll, isDatabaseAvailable } from '../db/database.js';
 
 /** Quita tildes, espacios sobrantes y pasa a minúsculas (igual que el resto de la API). */
 export function normalize(value) {
@@ -72,55 +72,52 @@ function mapPolinizador(row) {
 /* -------------------------------------------------------------------------- */
 
 // Los 11 países del proyecto, con el conteo de municipios y polinizadores.
-export function listPaises() {
-  const rows = getDb()
-    .prepare(
-      `SELECT p.id, p.nombre, p.codigo, p.centro_lat, p.centro_lng, p.zoom,
-              (SELECT COUNT(*) FROM municipios m WHERE m.pais_id = p.id)      AS total_municipios,
-              (SELECT COUNT(*) FROM pais_polinizador pp WHERE pp.pais_id = p.id) AS total_polinizadores
-       FROM paises p
-       ORDER BY p.nombre COLLATE NOCASE`
-    )
-    .all();
+export async function listPaises() {
+  const rows = await queryAll(
+    `SELECT p.id, p.nombre, p.codigo, p.centro_lat, p.centro_lng, p.zoom,
+            (SELECT COUNT(*) FROM municipios m WHERE m.pais_id = p.id)      AS total_municipios,
+            (SELECT COUNT(*) FROM pais_polinizador pp WHERE pp.pais_id = p.id) AS total_polinizadores
+     FROM paises p
+     ORDER BY p.nombre COLLATE NOCASE`
+  );
 
   return rows.map(mapPais);
 }
 
 // Un país por nombre (sin distinguir tildes ni mayúsculas) o null.
-export function findPais(nombre) {
+export async function findPais(nombre) {
   const objetivo = param(nombre);
   if (!objetivo) return null;
 
-  const row = getDb()
-    .prepare(
-      `SELECT p.id, p.nombre, p.codigo, p.centro_lat, p.centro_lng, p.zoom,
-              (SELECT COUNT(*) FROM municipios m WHERE m.pais_id = p.id)        AS total_municipios,
-              (SELECT COUNT(*) FROM pais_polinizador pp WHERE pp.pais_id = p.id) AS total_polinizadores
-       FROM paises p
-       WHERE p.nombre_normalizado = ?`
-    )
-    .get(objetivo);
+  const row = await queryOne(
+    `SELECT p.id, p.nombre, p.codigo, p.centro_lat, p.centro_lng, p.zoom,
+            (SELECT COUNT(*) FROM municipios m WHERE m.pais_id = p.id)        AS total_municipios,
+            (SELECT COUNT(*) FROM pais_polinizador pp WHERE pp.pais_id = p.id) AS total_polinizadores
+     FROM paises p
+     WHERE p.nombre_normalizado = ?`,
+    [objetivo]
+  );
 
   return row ? mapPais(row) : null;
 }
 
 // Catálogo de polinizadores nativos de un país (país > polinizador).
-export function listPolinizadoresDePais(paisId, { tipo = null, grupo = null } = {}) {
+export async function listPolinizadoresDePais(paisId, { tipo = null, grupo = null } = {}) {
   const tipoParam = param(tipo);
   const grupoParam = param(grupo);
 
-  return getDb()
-    .prepare(
-      `SELECT pol.id, pol.nombre_cientifico, pol.nombre_comun, pol.tipo, pol.grupo, pol.descripcion
-       FROM pais_polinizador pp
-       JOIN polinizadores pol ON pol.id = pp.polinizador_id
-       WHERE pp.pais_id = ?
-         AND (? IS NULL OR pol.tipo  = ?)
-         AND (? IS NULL OR pol.grupo = ?)
-       ORDER BY pol.tipo, pol.nombre_comun`
-    )
-    .all(paisId, tipoParam, tipoParam, grupoParam, grupoParam)
-    .map(mapPolinizador);
+  const rows = await queryAll(
+    `SELECT pol.id, pol.nombre_cientifico, pol.nombre_comun, pol.tipo, pol.grupo, pol.descripcion
+     FROM pais_polinizador pp
+     JOIN polinizadores pol ON pol.id = pp.polinizador_id
+     WHERE pp.pais_id = ?
+       AND (? IS NULL OR pol.tipo  = ?)
+       AND (? IS NULL OR pol.grupo = ?)
+     ORDER BY pol.tipo, pol.nombre_comun`,
+    [paisId, tipoParam, tipoParam, grupoParam, grupoParam]
+  );
+
+  return rows.map(mapPolinizador);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -128,44 +125,42 @@ export function listPolinizadoresDePais(paisId, { tipo = null, grupo = null } = 
 /* -------------------------------------------------------------------------- */
 
 // Municipios de un país con el conteo de polinizadores por tipo.
-export function listMunicipiosDePais(paisId) {
-  const rows = getDb()
-    .prepare(
-      `SELECT m.id, m.nombre, m.lat, m.lng, m.departamento, m.piso_climatico,
-              p.id AS pais_id, p.nombre AS pais,
-              (SELECT COUNT(*) FROM municipio_polinizador x WHERE x.municipio_id = m.id) AS total_polinizadores,
-              (SELECT COUNT(*) FROM municipio_polinizador x JOIN polinizadores q ON q.id = x.polinizador_id
-                 WHERE x.municipio_id = m.id AND q.tipo = 'abeja')    AS abejas,
-              (SELECT COUNT(*) FROM municipio_polinizador x JOIN polinizadores q ON q.id = x.polinizador_id
-                 WHERE x.municipio_id = m.id AND q.tipo = 'ave')      AS aves,
-              (SELECT COUNT(*) FROM municipio_polinizador x JOIN polinizadores q ON q.id = x.polinizador_id
-                 WHERE x.municipio_id = m.id AND q.tipo = 'mamifero') AS mamiferos
-       FROM municipios m
-       JOIN paises p ON p.id = m.pais_id
-       WHERE m.pais_id = ?
-       ORDER BY m.nombre COLLATE NOCASE`
-    )
-    .all(paisId);
+export async function listMunicipiosDePais(paisId) {
+  const rows = await queryAll(
+    `SELECT m.id, m.nombre, m.lat, m.lng, m.departamento, m.piso_climatico,
+            p.id AS pais_id, p.nombre AS pais,
+            (SELECT COUNT(*) FROM municipio_polinizador x WHERE x.municipio_id = m.id) AS total_polinizadores,
+            (SELECT COUNT(*) FROM municipio_polinizador x JOIN polinizadores q ON q.id = x.polinizador_id
+               WHERE x.municipio_id = m.id AND q.tipo = 'abeja')    AS abejas,
+            (SELECT COUNT(*) FROM municipio_polinizador x JOIN polinizadores q ON q.id = x.polinizador_id
+               WHERE x.municipio_id = m.id AND q.tipo = 'ave')      AS aves,
+            (SELECT COUNT(*) FROM municipio_polinizador x JOIN polinizadores q ON q.id = x.polinizador_id
+               WHERE x.municipio_id = m.id AND q.tipo = 'mamifero') AS mamiferos
+     FROM municipios m
+     JOIN paises p ON p.id = m.pais_id
+     WHERE m.pais_id = ?
+     ORDER BY m.nombre COLLATE NOCASE`,
+    [paisId]
+  );
 
   return rows.map(mapMunicipio);
 }
 
 // Busca municipios por nombre; si se indica país, restringe la búsqueda.
-export function findMunicipios(nombre, paisId = null) {
+export async function findMunicipios(nombre, paisId = null) {
   const objetivo = param(nombre);
   if (!objetivo) return [];
 
-  const rows = getDb()
-    .prepare(
-      `SELECT m.id, m.nombre, m.lat, m.lng, m.departamento, m.piso_climatico,
-              p.id AS pais_id, p.nombre AS pais
-       FROM municipios m
-       JOIN paises p ON p.id = m.pais_id
-       WHERE m.nombre_normalizado = ?
-         AND (? IS NULL OR m.pais_id = ?)
-       ORDER BY p.nombre COLLATE NOCASE`
-    )
-    .all(objetivo, paisId, paisId);
+  const rows = await queryAll(
+    `SELECT m.id, m.nombre, m.lat, m.lng, m.departamento, m.piso_climatico,
+            p.id AS pais_id, p.nombre AS pais
+     FROM municipios m
+     JOIN paises p ON p.id = m.pais_id
+     WHERE m.nombre_normalizado = ?
+       AND (? IS NULL OR m.pais_id = ?)
+     ORDER BY p.nombre COLLATE NOCASE`,
+    [objetivo, paisId, paisId]
+  );
 
   return rows.map(mapMunicipio);
 }
@@ -175,23 +170,23 @@ export function findMunicipios(nombre, paisId = null) {
 /* -------------------------------------------------------------------------- */
 
 // Polinizadores presentes en un municipio, opcionalmente filtrados por tipo/grupo.
-export function listPolinizadoresDeMunicipio(municipioId, { tipo = null, grupo = null } = {}) {
+export async function listPolinizadoresDeMunicipio(municipioId, { tipo = null, grupo = null } = {}) {
   const tipoParam = param(tipo);
   const grupoParam = param(grupo);
 
-  return getDb()
-    .prepare(
-      `SELECT pol.id, pol.nombre_cientifico, pol.nombre_comun, pol.tipo, pol.grupo,
-              pol.descripcion, mp.es_nativo, mp.abundancia
-       FROM municipio_polinizador mp
-       JOIN polinizadores pol ON pol.id = mp.polinizador_id
-       WHERE mp.municipio_id = ?
-         AND (? IS NULL OR pol.tipo  = ?)
-         AND (? IS NULL OR pol.grupo = ?)
-       ORDER BY pol.tipo, pol.nombre_comun`
-    )
-    .all(municipioId, tipoParam, tipoParam, grupoParam, grupoParam)
-    .map(mapPolinizador);
+  const rows = await queryAll(
+    `SELECT pol.id, pol.nombre_cientifico, pol.nombre_comun, pol.tipo, pol.grupo,
+            pol.descripcion, mp.es_nativo, mp.abundancia
+     FROM municipio_polinizador mp
+     JOIN polinizadores pol ON pol.id = mp.polinizador_id
+     WHERE mp.municipio_id = ?
+       AND (? IS NULL OR pol.tipo  = ?)
+       AND (? IS NULL OR pol.grupo = ?)
+     ORDER BY pol.tipo, pol.nombre_comun`,
+    [municipioId, tipoParam, tipoParam, grupoParam, grupoParam]
+  );
+
+  return rows.map(mapPolinizador);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -200,60 +195,55 @@ export function listPolinizadoresDeMunicipio(municipioId, { tipo = null, grupo =
 
 // Lista polinizadores filtrables por tipo, grupo, país y municipio; cada uno
 // incluye los países y municipios donde está registrado.
-export function listPolinizadores({ tipo = null, grupo = null, pais = null, municipio = null } = {}) {
-  const db = getDb();
+export async function listPolinizadores({ tipo = null, grupo = null, pais = null, municipio = null } = {}) {
   const tipoParam = param(tipo);
   const grupoParam = param(grupo);
   const paisParam = param(pais);
   const municipioParam = param(municipio);
 
-  const filas = db
-    .prepare(
-      `SELECT pol.id, pol.nombre_cientifico, pol.nombre_comun, pol.tipo, pol.grupo, pol.descripcion
-       FROM polinizadores pol
-       WHERE (? IS NULL OR pol.tipo  = ?)
-         AND (? IS NULL OR pol.grupo = ?)
-         AND EXISTS (
-               SELECT 1 FROM pais_polinizador pp
-               JOIN paises p ON p.id = pp.pais_id
-               WHERE pp.polinizador_id = pol.id AND (? IS NULL OR p.nombre_normalizado = ?)
-             )
-         AND EXISTS (
-               SELECT 1 FROM municipio_polinizador mp
-               JOIN municipios m ON m.id = mp.municipio_id
-               WHERE mp.polinizador_id = pol.id AND (? IS NULL OR m.nombre_normalizado = ?)
-             )
-       ORDER BY pol.tipo, pol.nombre_comun`
-    )
-    .all(
+  const filas = (await queryAll(
+    `SELECT pol.id, pol.nombre_cientifico, pol.nombre_comun, pol.tipo, pol.grupo, pol.descripcion
+     FROM polinizadores pol
+     WHERE (? IS NULL OR pol.tipo  = ?)
+       AND (? IS NULL OR pol.grupo = ?)
+       AND EXISTS (
+             SELECT 1 FROM pais_polinizador pp
+             JOIN paises p ON p.id = pp.pais_id
+             WHERE pp.polinizador_id = pol.id AND (? IS NULL OR p.nombre_normalizado = ?)
+           )
+       AND EXISTS (
+             SELECT 1 FROM municipio_polinizador mp
+             JOIN municipios m ON m.id = mp.municipio_id
+             WHERE mp.polinizador_id = pol.id AND (? IS NULL OR m.nombre_normalizado = ?)
+           )
+     ORDER BY pol.tipo, pol.nombre_comun`,
+    [
       tipoParam, tipoParam,
       grupoParam, grupoParam,
       paisParam, paisParam,
       municipioParam, municipioParam
-    )
-    .map(mapPolinizador);
+    ]
+  )).map(mapPolinizador);
 
   // Relaciones (país y municipio) agrupadas por polinizador.
+  const paisesRows = await queryAll(
+    `SELECT pp.polinizador_id, p.nombre AS pais
+     FROM pais_polinizador pp JOIN paises p ON p.id = pp.pais_id`
+  );
   const paisesPorPolinizador = new Map();
-  for (const row of db
-    .prepare(
-      `SELECT pp.polinizador_id, p.nombre AS pais
-       FROM pais_polinizador pp JOIN paises p ON p.id = pp.pais_id`
-    )
-    .all()) {
+  for (const row of paisesRows) {
     if (!paisesPorPolinizador.has(row.polinizador_id)) paisesPorPolinizador.set(row.polinizador_id, []);
     paisesPorPolinizador.get(row.polinizador_id).push(row.pais);
   }
 
+  const municipiosRows = await queryAll(
+    `SELECT mp.polinizador_id, m.nombre AS municipio, p.nombre AS pais
+     FROM municipio_polinizador mp
+     JOIN municipios m ON m.id = mp.municipio_id
+     JOIN paises p ON p.id = m.pais_id`
+  );
   const municipiosPorPolinizador = new Map();
-  for (const row of db
-    .prepare(
-      `SELECT mp.polinizador_id, m.nombre AS municipio, p.nombre AS pais
-       FROM municipio_polinizador mp
-       JOIN municipios m ON m.id = mp.municipio_id
-       JOIN paises p ON p.id = m.pais_id`
-    )
-    .all()) {
+  for (const row of municipiosRows) {
     if (!municipiosPorPolinizador.has(row.polinizador_id)) municipiosPorPolinizador.set(row.polinizador_id, []);
     municipiosPorPolinizador.get(row.polinizador_id).push({ municipio: row.municipio, pais: row.pais });
   }
@@ -269,16 +259,14 @@ export function listPolinizadores({ tipo = null, grupo = null, pais = null, muni
 /* Catálogo jerárquico completo: PAÍS > MUNICIPIO > POLINIZADOR               */
 /* -------------------------------------------------------------------------- */
 
-export function getCatalogoJerarquico() {
-  const rows = getDb()
-    .prepare(
-      `SELECT pais_id, pais, municipio_id, municipio, departamento, piso_climatico,
-              polinizador_id, nombre_cientifico, nombre_comun, tipo, grupo,
-              es_nativo, abundancia
-       FROM vw_catalogo_pais_municipio
-       ORDER BY pais COLLATE NOCASE, municipio COLLATE NOCASE, tipo, nombre_comun`
-    )
-    .all();
+export async function getCatalogoJerarquico() {
+  const rows = await queryAll(
+    `SELECT pais_id, pais, municipio_id, municipio, departamento, piso_climatico,
+            polinizador_id, nombre_cientifico, nombre_comun, tipo, grupo,
+            es_nativo, abundancia
+     FROM vw_catalogo_pais_municipio
+     ORDER BY pais COLLATE NOCASE, municipio COLLATE NOCASE, tipo, nombre_comun`
+  );
 
   const paises = new Map();
 
@@ -323,6 +311,6 @@ export function getCatalogoJerarquico() {
 }
 
 /** Comprueba que la base de datos esté operativa (para respuestas 503). */
-export function databaseReady() {
+export async function databaseReady() {
   return isDatabaseAvailable();
 }

@@ -15,7 +15,7 @@
 // ============================================================================
 
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
-import { getDb } from '../db/database.js';
+import { queryOne, execute } from '../db/database.js';
 
 // Roles admitidos por el sistema.
 export const ROLES = ['usuario', 'administrador', 'auditor'];
@@ -64,7 +64,7 @@ function usuarioPublico(row) {
 // ----------------------------------------------------------------------------
 // Registro de una cuenta de usuario (rol 'usuario').
 // ----------------------------------------------------------------------------
-export function registrarUsuario({ username, password } = {}) {
+export async function registrarUsuario({ username, password } = {}) {
   const nombre = normalizarUsername(username);
   const clave = String(password ?? '');
 
@@ -90,8 +90,7 @@ export function registrarUsuario({ username, password } = {}) {
     );
   }
 
-  const db = getDb();
-  const existente = db.prepare('SELECT id FROM usuarios WHERE username = ?').get(nombre);
+  const existente = await queryOne('SELECT id FROM usuarios WHERE username = ?', [nombre]);
   if (existente) {
     throw new AuthError('Ese usuario ya está registrado. Elige otro.', 409);
   }
@@ -99,9 +98,10 @@ export function registrarUsuario({ username, password } = {}) {
   const salt = randomBytes(16).toString('hex');
   const passwordHash = hashPassword(clave, salt);
 
-  const { lastInsertRowid } = db
-    .prepare('INSERT INTO usuarios (username, password_hash, salt, rol) VALUES (?, ?, ?, ?)')
-    .run(nombre, passwordHash, salt, 'usuario');
+  const { lastInsertRowid } = await execute(
+    'INSERT INTO usuarios (username, password_hash, salt, rol) VALUES (?, ?, ?, ?)',
+    [nombre, passwordHash, salt, 'usuario']
+  );
 
   return crearSesion({ id: Number(lastInsertRowid), username: nombre, rol: 'usuario' });
 }
@@ -113,7 +113,7 @@ export function registrarUsuario({ username, password } = {}) {
 // Se mantiene `rol` opcional por compatibilidad con clientes antiguos.
 // Devuelve { token, usuario }.
 // ----------------------------------------------------------------------------
-export function iniciarSesion({ username, password, rol } = {}) {
+export async function iniciarSesion({ username, password, rol } = {}) {
   const rolElegido = String(rol ?? '').trim().toLowerCase() || 'usuario';
   if (!ROLES.includes(rolElegido)) {
     throw new AuthError('Debes indicar un rol válido: usuario, administrador o auditor.', 400);
@@ -147,10 +147,10 @@ export function iniciarSesion({ username, password, rol } = {}) {
     throw new AuthError('Escribe tu usuario.', 400);
   }
 
-  const db = getDb();
-  const row = db
-    .prepare('SELECT id, username, rol, password_hash, salt FROM usuarios WHERE username = ?')
-    .get(nombre);
+  const row = await queryOne(
+    'SELECT id, username, rol, password_hash, salt FROM usuarios WHERE username = ?',
+    [nombre]
+  );
 
   if (!row || !mismoHash(row.password_hash, hashPassword(clave, row.salt))) {
     throw new AuthError('Usuario o contraseña incorrectos.', 401);

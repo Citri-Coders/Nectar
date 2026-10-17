@@ -21,9 +21,9 @@ function responderError(res, error) {
 }
 
 // POST /api/v1/auth/registro  -> crea una cuenta (rol 'usuario') e inicia sesión.
-export function registro(req, res) {
+export async function registro(req, res) {
   try {
-    const { token, usuario } = registrarUsuario(req.body ?? {});
+    const { token, usuario } = await registrarUsuario(req.body ?? {});
     return res.status(201).json({ mensaje: 'Cuenta creada con éxito.', token, usuario });
   } catch (error) {
     return responderError(res, error);
@@ -31,9 +31,9 @@ export function registro(req, res) {
 }
 
 // POST /api/v1/auth/login  -> inicia sesión con usuario o credenciales maestras.
-export function login(req, res) {
+export async function login(req, res) {
   try {
-    const { token, usuario } = iniciarSesion(req.body ?? {});
+    const { token, usuario } = await iniciarSesion(req.body ?? {});
     return res.json({ mensaje: `Bienvenido, ${usuario.username}.`, token, usuario });
   } catch (error) {
     return responderError(res, error);

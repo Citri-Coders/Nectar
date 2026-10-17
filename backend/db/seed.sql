@@ -272,67 +272,66 @@ INSERT OR IGNORE INTO polinizadores (nombre_cientifico, nombre_comun, tipo, grup
 -- ----------------------------------------------------------------------------
 INSERT OR IGNORE INTO pais_polinizador (pais_id, polinizador_id)
 SELECT p.id, pol.id
-FROM paises p, polinizadores pol
-WHERE (p.nombre, pol.nombre_cientifico) IN (
-  SELECT * FROM (VALUES
-    -- Nicaragua
-    ('Nicaragua','Melipona beecheii'), ('Nicaragua','Trigona fulviventris'),
-    ('Nicaragua','Xylocopa'), ('Nicaragua','Centris'),
-    ('Nicaragua','Anthracothorax nigricollis'), ('Nicaragua','Amazilia saucerottei'),
-    ('Nicaragua','Glossophaga soricina'), ('Nicaragua','Leptonycteris yerbabuenae'),
-    -- Colombia
-    ('Colombia','Melipona compressipes'), ('Colombia','Tetragonisca angustula'),
-    ('Colombia','Xylocopa'), ('Colombia','Centris'),
-    ('Colombia','Coeligena torquata'), ('Colombia','Heliangelus strophianus'),
-    ('Colombia','Glossophaga soricina'), ('Colombia','Anoura geoffroyi'),
-    -- Brasil
-    ('Brasil','Melipona quadrifasciata'), ('Brasil','Tetragonisca'),
-    ('Brasil','Xylocopa'), ('Brasil','Centris'),
-    ('Brasil','Amazilia fimbriata'), ('Brasil','Chlorostilbon lucidus'),
-    ('Brasil','Glossophaga soricina'), ('Brasil','Anoura caudifer'),
-    -- Argentina
-    ('Argentina','Tetragonisca fiebrigi'), ('Argentina','Scaptotrigona jujuyensis'),
-    ('Argentina','Xylocopa'), ('Argentina','Centris'),
-    ('Argentina','Patagona gigas'), ('Argentina','Amazilia chionogaster'),
-    ('Argentina','Glossophaga soricina'), ('Argentina','Anoura caudifer'),
-    -- Bolivia
-    ('Bolivia','Tetragonisca angustula'), ('Bolivia','Melipona rufiventris'),
-    ('Bolivia','Xylocopa'), ('Bolivia','Centris'),
-    ('Bolivia','Patagona gigas'), ('Bolivia','Oreotrochilus estella'),
-    ('Bolivia','Glossophaga soricina'), ('Bolivia','Anoura geoffroyi'),
-    -- Chile
-    ('Chile','Manuelia postica'), ('Chile','Manuelia gayi'),
-    ('Chile','Centris'), ('Chile','Colletes'),
-    ('Chile','Sephanoides sephaniodes'), ('Chile','Sephanoides fernandensis'),
-    ('Chile','Dromiciops gliroides'), ('Chile','Octodon degus'),
-    -- Costa Rica
-    ('Costa Rica','Melipona beecheii'), ('Costa Rica','Tetragonisca angustula'),
-    ('Costa Rica','Xylocopa'), ('Costa Rica','Centris'),
-    ('Costa Rica','Panterpe insignis'), ('Costa Rica','Eupherusa eximia'),
-    ('Costa Rica','Glossophaga soricina'), ('Costa Rica','Anoura geoffroyi'),
-    -- El Salvador
-    ('El Salvador','Melipona beecheii'), ('El Salvador','Trigona fulviventris'),
-    ('El Salvador','Xylocopa'), ('El Salvador','Centris'),
-    ('El Salvador','Anthracothorax nigricollis'), ('El Salvador','Amazilia beryllina'),
-    ('El Salvador','Glossophaga soricina'), ('El Salvador','Leptonycteris yerbabuenae'),
-    -- México
-    ('México','Melipona beecheii'), ('México','Scaptotrigona pectoralis'),
-    ('México','Xylocopa'), ('México','Centris'),
-    ('México','Amazilia beryllina'), ('México','Cynanthus latirostris'),
-    ('México','Leptonycteris yerbabuenae'), ('México','Choeronycteris mexicana'),
-    -- Paraguay
-    ('Paraguay','Tetragonisca fiebrigi'), ('Paraguay','Scaptotrigona'),
-    ('Paraguay','Xylocopa'), ('Paraguay','Centris'),
-    ('Paraguay','Chlorostilbon lucidus'), ('Paraguay','Amazilia versicolor'),
-    ('Paraguay','Glossophaga soricina'), ('Paraguay','Pygoderma bilabiatum'),
-    -- Venezuela
-    ('Venezuela','Melipona favosa'), ('Venezuela','Tetragonisca angustula'),
-    ('Venezuela','Xylocopa'), ('Venezuela','Centris'),
-    ('Venezuela','Anthracothorax viridigula'), ('Venezuela','Amazilia tobaci'),
-    ('Venezuela','Leptonycteris curasoae'), ('Venezuela','Glossophaga longirostris'),
-    ('Venezuela','Anoura geoffroyi')
-  )
-);
+FROM (VALUES
+  -- Nicaragua
+  ('Nicaragua','Melipona beecheii'), ('Nicaragua','Trigona fulviventris'),
+  ('Nicaragua','Xylocopa'), ('Nicaragua','Centris'),
+  ('Nicaragua','Anthracothorax nigricollis'), ('Nicaragua','Amazilia saucerottei'),
+  ('Nicaragua','Glossophaga soricina'), ('Nicaragua','Leptonycteris yerbabuenae'),
+  -- Colombia
+  ('Colombia','Melipona compressipes'), ('Colombia','Tetragonisca angustula'),
+  ('Colombia','Xylocopa'), ('Colombia','Centris'),
+  ('Colombia','Coeligena torquata'), ('Colombia','Heliangelus strophianus'),
+  ('Colombia','Glossophaga soricina'), ('Colombia','Anoura geoffroyi'),
+  -- Brasil
+  ('Brasil','Melipona quadrifasciata'), ('Brasil','Tetragonisca'),
+  ('Brasil','Xylocopa'), ('Brasil','Centris'),
+  ('Brasil','Amazilia fimbriata'), ('Brasil','Chlorostilbon lucidus'),
+  ('Brasil','Glossophaga soricina'), ('Brasil','Anoura caudifer'),
+  -- Argentina
+  ('Argentina','Tetragonisca fiebrigi'), ('Argentina','Scaptotrigona jujuyensis'),
+  ('Argentina','Xylocopa'), ('Argentina','Centris'),
+  ('Argentina','Patagona gigas'), ('Argentina','Amazilia chionogaster'),
+  ('Argentina','Glossophaga soricina'), ('Argentina','Anoura caudifer'),
+  -- Bolivia
+  ('Bolivia','Tetragonisca angustula'), ('Bolivia','Melipona rufiventris'),
+  ('Bolivia','Xylocopa'), ('Bolivia','Centris'),
+  ('Bolivia','Patagona gigas'), ('Bolivia','Oreotrochilus estella'),
+  ('Bolivia','Glossophaga soricina'), ('Bolivia','Anoura geoffroyi'),
+  -- Chile
+  ('Chile','Manuelia postica'), ('Chile','Manuelia gayi'),
+  ('Chile','Centris'), ('Chile','Colletes'),
+  ('Chile','Sephanoides sephaniodes'), ('Chile','Sephanoides fernandensis'),
+  ('Chile','Dromiciops gliroides'), ('Chile','Octodon degus'),
+  -- Costa Rica
+  ('Costa Rica','Melipona beecheii'), ('Costa Rica','Tetragonisca angustula'),
+  ('Costa Rica','Xylocopa'), ('Costa Rica','Centris'),
+  ('Costa Rica','Panterpe insignis'), ('Costa Rica','Eupherusa eximia'),
+  ('Costa Rica','Glossophaga soricina'), ('Costa Rica','Anoura geoffroyi'),
+  -- El Salvador
+  ('El Salvador','Melipona beecheii'), ('El Salvador','Trigona fulviventris'),
+  ('El Salvador','Xylocopa'), ('El Salvador','Centris'),
+  ('El Salvador','Anthracothorax nigricollis'), ('El Salvador','Amazilia beryllina'),
+  ('El Salvador','Glossophaga soricina'), ('El Salvador','Leptonycteris yerbabuenae'),
+  -- México
+  ('México','Melipona beecheii'), ('México','Scaptotrigona pectoralis'),
+  ('México','Xylocopa'), ('México','Centris'),
+  ('México','Amazilia beryllina'), ('México','Cynanthus latirostris'),
+  ('México','Leptonycteris yerbabuenae'), ('México','Choeronycteris mexicana'),
+  -- Paraguay
+  ('Paraguay','Tetragonisca fiebrigi'), ('Paraguay','Scaptotrigona'),
+  ('Paraguay','Xylocopa'), ('Paraguay','Centris'),
+  ('Paraguay','Chlorostilbon lucidus'), ('Paraguay','Amazilia versicolor'),
+  ('Paraguay','Glossophaga soricina'), ('Paraguay','Pygoderma bilabiatum'),
+  -- Venezuela
+  ('Venezuela','Melipona favosa'), ('Venezuela','Tetragonisca angustula'),
+  ('Venezuela','Xylocopa'), ('Venezuela','Centris'),
+  ('Venezuela','Anthracothorax viridigula'), ('Venezuela','Amazilia tobaci'),
+  ('Venezuela','Leptonycteris curasoae'), ('Venezuela','Glossophaga longirostris'),
+  ('Venezuela','Anoura geoffroyi')
+) AS v
+JOIN paises p ON p.nombre = v.column1
+JOIN polinizadores pol ON pol.nombre_cientifico = v.column2;
 
 -- ----------------------------------------------------------------------------
 -- 5. POLINIZADORES PRESENTES EN CADA MUNICIPIO

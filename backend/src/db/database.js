@@ -1,29 +1,51 @@
 // ============================================================================
-// Conexión a la base de datos SQLite de biodiversidad (Néctar LatAm).
+// Conexión a la base de datos de biodiversidad (Néctar LatAm).
 // ----------------------------------------------------------------------------
-// Usa el módulo nativo `node:sqlite` (Node >= 22), de modo que el proyecto no
-// necesita dependencias adicionales. La base se crea y se pobla automáticamente
-// la primera vez que se consulta:
-//     1. ejecuta backend/db/schema.sql  (tablas, índices y vistas)
-//     2. si no hay países, ejecuta backend/db/seed.sql (datos semilla)
-//
-// La ruta del archivo se puede sobreescribir con la variable de entorno
-// NECTAR_DB_PATH (útil para pruebas).
+// Soporta dos modos:
+// 1. Turso (Cloud libSQL): cuando TURSO_DATABASE_URL y TURSO_AUTH_TOKEN
+//    están presentes. Proporciona persistencia real en serverless (Vercel) y
+//    producción.
+// 2. SQLite local: cuando no hay credenciales de Turso. Usa el módulo nativo
+//    `node:sqlite` (Node >= 22). En Vercel usa /tmp (efímero) y en local backend/db.
 // ============================================================================
 
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, scryptSync } from 'node:crypto';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// En Vercel la función se empaqueta en un bundle: se recomienda resolver las
-// rutas desde process.cwd() en vez de import.meta.url/__dirname, y el único
-// directorio con permiso de escritura es /tmp. Fuera de Vercel se mantiene la
-// ruta tradicional backend/db para el desarrollo local.
+// Carga automática de variables de entorno desde .env si no están presentes
+function cargarEnvSiExiste() {
+  if (process.env.TURSO_DATABASE_URL && process.env.TURSO_AUTH_TOKEN) return;
+  const posiblesRutas = [
+    resolve(process.cwd(), '.env'),
+    resolve(here, '..', '..', '.env'),
+    resolve(here, '..', '.env'),
+  ];
+  for (const ruta of posiblesRutas) {
+    if (existsSync(ruta)) {
+      try {
+        const contenido = readFileSync(ruta, 'utf8');
+        for (const linea of contenido.split('\n')) {
+          const limpia = linea.trim();
+          if (!limpia || limpia.startsWith('#')) continue;
+          const [clave, ...resto] = limpia.split('=');
+          if (clave && resto.length && !process.env[clave.trim()]) {
+            process.env[clave.trim()] = resto.join('=').trim().replace(/^["']|["']$/g, '');
+          }
+        }
+      } catch {}
+      break;
+    }
+  }
+}
+
+cargarEnvSiExiste();
+
 const IS_SERVERLESS = Boolean(process.env.VERCEL);
 const DB_DIR = IS_SERVERLESS
   ? resolve(process.cwd(), 'backend', 'db')
@@ -31,12 +53,7 @@ const DB_DIR = IS_SERVERLESS
 const SCHEMA_PATH = join(DB_DIR, 'schema.sql');
 const SEED_PATH = join(DB_DIR, 'seed.sql');
 
-// Versión del esquema. Al cambiarla, la base existente se reconstruye desde
-// schema.sql + seed.sql. Las cuentas de usuario registradas viven en la misma
-// base, por lo que un cambio de versión del esquema las elimina.
 const SCHEMA_VERSION = 3;
-
-// Tablas en orden inverso de dependencias (para reconstruir sin violar FKs).
 const TABLAS = [
   'sesiones',
   'usuarios',
@@ -47,50 +64,58 @@ const TABLAS = [
   'paises',
 ];
 
-// En serverless (Vercel) el sistema de archivos es de solo lectura salvo /tmp,
-// por lo que la base se crea ahí en cada arranque en frío (los datos no
-// persisten entre invocaciones). Se puede forzar otra ruta con NECTAR_DB_PATH.
 const DEFAULT_DB_PATH = IS_SERVERLESS
   ? join(tmpdir(), 'nectar.sqlite')
   : join(DB_DIR, 'nectar.sqlite');
 
 export const DB_PATH = process.env.NECTAR_DB_PATH ?? DEFAULT_DB_PATH;
 
-/** @type {DatabaseSync | null} */
-let db = null;
+export const TURSO_DATABASE_URL = process.env.TURSO_DATABASE_URL;
+export const TURSO_AUTH_TOKEN = process.env.TURSO_AUTH_TOKEN;
 
-// Crea la conexión y garantiza que exista la estructura + semilla.
-function connect() {
+export const isTurso = Boolean(TURSO_DATABASE_URL && TURSO_AUTH_TOKEN);
+
+/** @type {any} */
+let tursoClient = null;
+/** @type {DatabaseSync | null} */
+let localDb = null;
+
+// Inicializa cliente Turso con @libsql/client de forma síncrona/perezosa
+async function getTursoClient() {
+  if (!tursoClient) {
+    const { createClient } = await import('@libsql/client');
+    tursoClient = createClient({
+      url: TURSO_DATABASE_URL,
+      authToken: TURSO_AUTH_TOKEN,
+    });
+  }
+  return tursoClient;
+}
+
+// Crea la conexión local SQLite y garantiza esquema + semilla
+function getLocalConnection() {
+  if (localDb) return localDb;
+
   const connection = new DatabaseSync(DB_PATH);
   connection.exec('PRAGMA foreign_keys = ON;');
 
   const { user_version: version } = connection.prepare('PRAGMA user_version').get();
   if (version !== SCHEMA_VERSION) {
-    // Esquema antiguo o recién creado: se recrea la estructura.
     connection.exec('PRAGMA foreign_keys = OFF;');
     for (const tabla of TABLAS) connection.exec(`DROP TABLE IF EXISTS ${tabla};`);
     connection.exec('PRAGMA foreign_keys = ON;');
   }
 
   connection.exec(readFileSync(SCHEMA_PATH, 'utf8'));
-
-  // La semilla es idempotente (INSERT OR IGNORE), por lo que se ejecuta siempre:
-  // así los municipios/polinizadores nuevos se incorporan sin recrear la base.
   connection.exec(readFileSync(SEED_PATH, 'utf8'));
-
-  asegurarCuentaAdmin(connection);
+  asegurarCuentaAdminLocal(connection);
 
   connection.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
-  return connection;
+  localDb = connection;
+  return localDb;
 }
 
-// ----------------------------------------------------------------------------
-// Cuenta de administrador interna.
-// Se crea de forma automática en la primera apertura de la base. Tiene el rol
-// 'administrador', por lo que da acceso total al proyecto (eliminar datos,
-// administrar el contenido, etc.).
-// ----------------------------------------------------------------------------
-function asegurarCuentaAdmin(connection) {
+function asegurarCuentaAdminLocal(connection) {
   const username = 'admin';
   const password = 'admin2004';
 
@@ -99,7 +124,6 @@ function asegurarCuentaAdmin(connection) {
     .get(username);
 
   if (existente) {
-    // Se garantiza que conserve el rol con todos los permisos.
     if (existente.rol !== 'administrador') {
       connection
         .prepare("UPDATE usuarios SET rol = 'administrador' WHERE id = ?")
@@ -117,28 +141,105 @@ function asegurarCuentaAdmin(connection) {
 }
 
 /**
- * Devuelve la conexión SQLite (singleton). Se inicializa de forma perezosa para
- * que un fallo de la base de datos no impida arrancar el resto de la API.
+ * Ejecuta una consulta SQL y devuelve la primera fila mapeada o null.
+ * @param {string} sql
+ * @param {any[]} args
  */
-export function getDb() {
-  if (!db) db = connect();
-  return db;
+export async function queryOne(sql, args = []) {
+  if (isTurso) {
+    const client = await getTursoClient();
+    const res = await client.execute({ sql, args });
+    return res.rows[0] ?? null;
+  }
+  const db = getLocalConnection();
+  return db.prepare(sql).get(...args) ?? null;
 }
 
-/** Indica si la base de datos está disponible (sin lanzar errores). */
-export function isDatabaseAvailable() {
+/**
+ * Ejecuta una consulta SQL y devuelve todas las filas encontradas.
+ * @param {string} sql
+ * @param {any[]} args
+ */
+export async function queryAll(sql, args = []) {
+  if (isTurso) {
+    const client = await getTursoClient();
+    const res = await client.execute({ sql, args });
+    return res.rows;
+  }
+  const db = getLocalConnection();
+  return db.prepare(sql).all(...args);
+}
+
+/**
+ * Ejecuta una sentencia SQL de modificación (INSERT, UPDATE, DELETE).
+ * @param {string} sql
+ * @param {any[]} args
+ */
+export async function execute(sql, args = []) {
+  if (isTurso) {
+    const client = await getTursoClient();
+    const res = await client.execute({ sql, args });
+    return {
+      affectedRows: Number(res.rowsAffected ?? 0),
+      lastInsertRowid: res.lastInsertRowid !== undefined && res.lastInsertRowid !== null
+        ? Number(res.lastInsertRowid)
+        : null,
+    };
+  }
+  const db = getLocalConnection();
+  const res = db.prepare(sql).run(...args);
+  return {
+    affectedRows: Number(res.changes ?? 0),
+    lastInsertRowid: res.lastInsertRowid !== undefined && res.lastInsertRowid !== null
+      ? Number(res.lastInsertRowid)
+      : null,
+  };
+}
+
+/**
+ * Ejecuta un bloque con múltiples sentencias SQL (DDL, migraciones).
+ * @param {string} sql
+ */
+export async function executeMultiple(sql) {
+  if (isTurso) {
+    const client = await getTursoClient();
+    await client.executeMultiple(sql);
+    return;
+  }
+  const db = getLocalConnection();
+  db.exec(sql);
+}
+
+/** Indica si la base de datos está disponible (Turso o SQLite local). */
+export async function isDatabaseAvailable() {
   try {
-    getDb();
+    if (isTurso) {
+      const client = await getTursoClient();
+      await client.execute('SELECT 1;');
+      return true;
+    }
+    getLocalConnection();
     return true;
   } catch (error) {
-    console.error('[biodiversidad] no se pudo abrir la base de datos:', error.message);
+    console.error('[biodiversidad] error en base de datos:', error.message);
     return false;
   }
 }
 
-// Permite inicializar la base manualmente:   npm run db:init
+/** Devuelve la conexión local directa si se usa SQLite local (compatibilidad). */
+export function getDb() {
+  if (isTurso) {
+    throw new Error('La base de datos está configurada con Turso (asíncrono). Usa queryOne, queryAll o execute.');
+  }
+  return getLocalConnection();
+}
+
+// Ejecución directa para pruebas o db:init
 if (process.argv[1]?.endsWith('database.js')) {
-  getDb();
-  const { total } = getDb().prepare('SELECT COUNT(*) AS total FROM paises').get();
-  console.log(`✅ Base de datos lista en ${DB_PATH} (${total} países).`);
+  (async () => {
+    const modo = isTurso ? `Turso (${TURSO_DATABASE_URL})` : `SQLite local (${DB_PATH})`;
+    console.log(`📡 Conectando a ${modo}...`);
+    const row = await queryOne('SELECT COUNT(*) AS total FROM paises');
+    console.log(`✅ Base de datos lista con ${row?.total ?? 0} países.`);
+  })().catch(console.error);
 }
