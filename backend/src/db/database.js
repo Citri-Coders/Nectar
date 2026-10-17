@@ -14,11 +14,20 @@
 import { DatabaseSync } from 'node:sqlite';
 import { randomBytes, scryptSync } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const DB_DIR = resolve(here, '..', '..', 'db');
+
+// En Vercel la función se empaqueta en un bundle: se recomienda resolver las
+// rutas desde process.cwd() en vez de import.meta.url/__dirname, y el único
+// directorio con permiso de escritura es /tmp. Fuera de Vercel se mantiene la
+// ruta tradicional backend/db para el desarrollo local.
+const IS_SERVERLESS = Boolean(process.env.VERCEL);
+const DB_DIR = IS_SERVERLESS
+  ? resolve(process.cwd(), 'backend', 'db')
+  : resolve(here, '..', '..', 'db');
 const SCHEMA_PATH = join(DB_DIR, 'schema.sql');
 const SEED_PATH = join(DB_DIR, 'seed.sql');
 
@@ -38,7 +47,14 @@ const TABLAS = [
   'paises',
 ];
 
-export const DB_PATH = process.env.NECTAR_DB_PATH ?? join(DB_DIR, 'nectar.sqlite');
+// En serverless (Vercel) el sistema de archivos es de solo lectura salvo /tmp,
+// por lo que la base se crea ahí en cada arranque en frío (los datos no
+// persisten entre invocaciones). Se puede forzar otra ruta con NECTAR_DB_PATH.
+const DEFAULT_DB_PATH = IS_SERVERLESS
+  ? join(tmpdir(), 'nectar.sqlite')
+  : join(DB_DIR, 'nectar.sqlite');
+
+export const DB_PATH = process.env.NECTAR_DB_PATH ?? DEFAULT_DB_PATH;
 
 /** @type {DatabaseSync | null} */
 let db = null;

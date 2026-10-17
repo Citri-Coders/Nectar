@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm install && npm --prefix frontend install --include=dev",
+  "buildCommand": "npm --prefix frontend run build && node scripts/copy-frontend.mjs",
+  "functions": {
+    "index.js": {
+      "includeFiles": "backend/db/**"
+    }
+  },
+  "rewrites": [{ "source": "/:path((?!api).*)", "destination": "/index.html" }]
+}

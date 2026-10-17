@@ -1,0 +1,21 @@
+{
+  "name": "nectar-latam",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Néctar LatAm — monorepo (API Express + SPA React) desplegable en Vercel como un solo proyecto",
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "node backend/src/server.js",
+    "start": "node backend/src/server.js",
+    "db:init": "node backend/src/db/database.js",
+    "build": "npm --prefix frontend run build && node scripts/copy-frontend.mjs"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0"
+  }
+}
