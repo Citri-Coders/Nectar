@@ -136,6 +136,9 @@ CREATE TABLE IF NOT EXISTS usuarios (
   fecha_registro TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Tabla heredada: las sesiones ahora son tokens firmados (HMAC) autocontenidos
+-- y no se persisten aquí (ver backend/src/services/auth.service.js). Se conserva
+-- para no romper bases ya creadas.
 CREATE TABLE IF NOT EXISTS sesiones (
   token          TEXT    PRIMARY KEY,              -- identificador de sesión
   username       TEXT    NOT NULL,                 -- nombre mostrado

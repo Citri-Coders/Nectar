@@ -16,7 +16,7 @@ Jerarquía **PAÍS > MUNICIPIO > POLINIZADOR** (aves, abejas, mamíferos) de Né
 - `pais_polinizador` — polinizadores nativos de cada país (N:M).
 - `municipio_polinizador` — polinizadores presentes en cada municipio (N:M). **Es la tabla del filtro por municipio.**
 - `usuarios` — cuentas de la comunidad (`username`, `password_hash` scrypt, `salt`, `rol`).
-- `sesiones` — tokens de sesión activos (`token`, `username`, `rol`, `usuario_id`). Sobreviven al reinicio del servidor.
+- `sesiones` — tabla heredada. Las sesiones ahora son tokens firmados (HMAC) autocontenidos y ya no se guardan aquí, para que funcionen en entornos serverless como Vercel.
 
 Vistas: `vw_catalogo_pais_municipio`, `vw_resumen_municipio`, `vw_municipio_polinizadores_json`.
 

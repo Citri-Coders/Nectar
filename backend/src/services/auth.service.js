@@ -8,12 +8,13 @@
 //                        Además de ingresar datos, puede eliminarlos.
 //     'auditor'       -> credenciales maestras (misma contraseña). Solo consulta.
 //
-// Las sesiones se guardan en la tabla `sesiones` (SQLite), por lo que sobreviven
-// a un reinicio del servidor. No se usan dependencias externas: todo el hash y
-// la generación de tokens usan `node:crypto`.
+// Las sesiones se firman con HMAC (token autocontenido), por lo que no dependen
+// de la base de datos ni de la memoria del proceso: sobreviven a reinicios y al
+// modelo serverless de Vercel (varias instancias efímeras). No se usan
+// dependencias externas: todo el hash y la firma usan `node:crypto`.
 // ============================================================================
 
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 import { getDb } from '../db/database.js';
 
 // Roles admitidos por el sistema.
@@ -161,37 +162,63 @@ export function iniciarSesion({ username, password, rol } = {}) {
 // ----------------------------------------------------------------------------
 // Sesiones
 // ----------------------------------------------------------------------------
-export function crearSesion(usuario) {
-  const db = getDb();
-  const token = `${randomUUID()}.${randomBytes(16).toString('hex')}`;
+// El token es un "JWT" casero:  <payload base64url>.<firma HMAC-SHA256>.
+// Al ser autocontenido y verificable con un secreto, la sesión NO depende de la
+// base de datos ni de memoria del proceso. Es imprescindible en Vercel, donde
+// cada invocación puede correr en una instancia distinta cuyo sistema de
+// archivos (y por tanto la base SQLite en /tmp) es efímero.
+// ----------------------------------------------------------------------------
 
-  db.prepare(
-    'INSERT INTO sesiones (token, username, rol, usuario_id) VALUES (?, ?, ?, ?)'
-  ).run(token, usuario.username, usuario.rol, usuario.id ?? null);
+// Secreto para firmar los tokens. En producción define NECTAR_AUTH_SECRET; el
+// valor por defecto sirve solo para desarrollo local.
+const AUTH_SECRET = String(process.env.NECTAR_AUTH_SECRET ?? 'nectar-latam-dev-secret');
 
-  return { token, usuario };
+// Vigencia del token (30 días). Al expirar, el cliente deberá volver a entrar.
+const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+
+function firmar(cuerpo) {
+  return createHmac('sha256', AUTH_SECRET).update(cuerpo).digest('base64url');
 }
 
-// Devuelve el usuario de una sesión activa, o null si el token no es válido.
+export function crearSesion(usuario) {
+  const payload = {
+    sub: usuario.id ?? null,
+    u: usuario.username,
+    r: usuario.rol,
+    exp: Date.now() + TOKEN_TTL_MS,
+  };
+
+  const cuerpo = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+  return { token: `${cuerpo}.${firmar(cuerpo)}`, usuario };
+}
+
+// Devuelve el usuario de un token válido (firma correcta y sin expirar), o null.
 export function usuarioPorToken(token) {
   const valor = String(token ?? '').trim();
-  if (!valor) return null;
+  const [cuerpo, firma] = valor.split('.');
+  if (!cuerpo || !firma) return null;
 
-  const db = getDb();
-  const row = db
-    .prepare('SELECT username, rol, usuario_id FROM sesiones WHERE token = ?')
-    .get(valor);
+  const esperada = firmar(cuerpo);
+  const recibida = Buffer.from(firma);
+  const calculada = Buffer.from(esperada);
+  if (recibida.length !== calculada.length || !timingSafeEqual(recibida, calculada)) {
+    return null;
+  }
 
-  if (!row) return null;
-  return { id: row.usuario_id ?? null, username: row.username, rol: row.rol };
+  let payload;
+  try {
+    payload = JSON.parse(Buffer.from(cuerpo, 'base64url').toString('utf8'));
+  } catch {
+    return null;
+  }
+
+  if (!payload || typeof payload.exp !== 'number' || Date.now() > payload.exp) return null;
+  return { id: payload.sub ?? null, username: payload.u, rol: payload.r };
 }
 
-// Cierra (invalida) una sesión. Devuelve true si existía.
-export function cerrarSesion(token) {
-  const valor = String(token ?? '').trim();
-  if (!valor) return false;
-
-  const db = getDb();
-  const { changes } = db.prepare('DELETE FROM sesiones WHERE token = ?').run(valor);
-  return changes > 0;
+// Con tokens autocontenidos no hay estado en el servidor que revocar: el cierre
+// de sesión ocurre en el cliente al descartar el token. Se conserva la función
+// para no cambiar la API pública del servicio.
+export function cerrarSesion() {
+  return false;
 }
