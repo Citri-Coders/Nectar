@@ -5,12 +5,20 @@ import {
   createAdoption,
   getAdoptedM2,
 } from '../data/sealData.js';
+import {
+  esEmailValido,
+  hayErrores,
+  isBlank,
+  recortar,
+  responderValidacion,
+  validarNumero,
+  validarTexto,
+  validarTextoOpcional,
+} from '../utils/validacion.js';
 
 const PRECIO_SUGERIDO_POR_M2 = 0.5; // USD por metro cuadrado (si no lo envían)
-
-function isBlank(value) {
-  return value === undefined || value === null || String(value).trim() === '';
-}
+const MAX_METROS = 100000;
+const MAX_MENSAJE = 300;
 // Arma la ficha pública de trazabilidad a partir de la certificación y el espacio.
 function buildFicha(cert, space) {
   const metrosAdoptados = getAdoptedM2(cert.espacio_id);
@@ -53,30 +61,45 @@ export function verifySeal(req, res) {
 export function adoptHabitat(req, res) {
   const body = req.body ?? {};
 
-  const camposFaltantes = ['espacio_id', 'nombre_consumidor', 'metros_cuadrados'].filter(
-    (field) => isBlank(body[field])
+  const camposFaltantes = ['espacio_id', 'nombre_consumidor', 'metros_cuadrados'].filter((field) =>
+    isBlank(body[field])
   );
-  if (camposFaltantes.length > 0) {
-    return res.status(400).json({
-      message: 'Faltan campos obligatorios para registrar la adopción.',
-      campos_faltantes: camposFaltantes,
-    });
+  const camposInvalidos = {};
+
+  if (!isBlank(body.nombre_consumidor)) {
+    camposInvalidos.nombre_consumidor = validarTexto(body.nombre_consumidor, { min: 2, max: 100 });
   }
 
-  const metros = Number(body.metros_cuadrados);
-  if (!Number.isFinite(metros) || metros <= 0) {
-    return res.status(400).json({
-      message: 'El campo "metros_cuadrados" debe ser un número mayor a 0.',
+  if (!isBlank(body.metros_cuadrados)) {
+    camposInvalidos.metros_cuadrados = validarNumero(body.metros_cuadrados, {
+      min: 1,
+      max: MAX_METROS,
     });
   }
 
   // El monto a pagar nunca puede ser negativo.
-  if (!isBlank(body.monto_usd) && (!Number.isFinite(Number(body.monto_usd)) || Number(body.monto_usd) < 0)) {
-    return res.status(400).json({
-      message: 'El campo "monto_usd" debe ser un número mayor o igual a 0.',
-      campo: 'monto_usd',
-    });
+  if (!isBlank(body.monto_usd)) {
+    camposInvalidos.monto_usd = validarNumero(body.monto_usd, { min: 0 });
   }
+
+  // El correo es opcional, pero si viene debe tener formato válido.
+  if (!isBlank(body.email) && !esEmailValido(body.email)) {
+    camposInvalidos.email = 'Escribe un correo electrónico válido.';
+  }
+
+  if (!isBlank(body.mensaje_apoyo)) {
+    camposInvalidos.mensaje_apoyo = validarTextoOpcional(body.mensaje_apoyo, { max: MAX_MENSAJE });
+  }
+
+  for (const campo of Object.keys(camposInvalidos)) {
+    if (!camposInvalidos[campo]) delete camposInvalidos[campo];
+  }
+
+  if (hayErrores(camposFaltantes, camposInvalidos)) {
+    return responderValidacion(res, { campos_faltantes: camposFaltantes, campos_invalidos: camposInvalidos });
+  }
+
+  const metros = Number(body.metros_cuadrados);
 
   const space = findSpaceById(body.espacio_id);
   if (!space) {
@@ -101,8 +124,11 @@ export function adoptHabitat(req, res) {
   const adopcion = createAdoption({
     ...body,
     espacio_id: space.id,
+    nombre_consumidor: recortar(body.nombre_consumidor),
+    email: isBlank(body.email) ? null : recortar(body.email),
     metros_cuadrados: metros,
     monto_usd: monto,
+    mensaje_apoyo: isBlank(body.mensaje_apoyo) ? null : recortar(body.mensaje_apoyo),
   });
 
   const totalAdoptado = getAdoptedM2(space.id);

@@ -24,6 +24,49 @@ export interface ApiErrorPayload {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Autenticación                                                              */
+/* -------------------------------------------------------------------------- */
+
+export type Rol = 'usuario' | 'administrador' | 'auditor';
+
+export interface Usuario {
+  id: number | null;
+  username: string;
+  rol: Rol;
+}
+
+export interface AuthResponse {
+  mensaje?: string;
+  token: string;
+  usuario: Usuario;
+}
+
+export interface LoginInput {
+  username?: string;
+  password: string;
+  rol: Rol;
+}
+
+export interface RegistroInput {
+  username: string;
+  password: string;
+}
+
+export interface DeleteSpaceResponse {
+  mensaje: string;
+  espacio_id: string;
+  monitoreos_eliminados: number;
+}
+
+export interface DeleteMonitoringResponse {
+  mensaje: string;
+  monitoreo_id: string;
+  espacio_id: string;
+  puntos_totales_espacio: number;
+  insignia_actual: string | null;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Especies nativas                                                           */
 /* -------------------------------------------------------------------------- */
 
@@ -196,6 +239,90 @@ export interface MapPoint {
   polinizador_principal: string | null;
   puntos: number;
   certificado: boolean;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Biodiversidad (SQLite) — País > Municipio > Polinizador                    */
+/* Base: backend/src/{routes,controllers,repositories}/biodiversidad*         */
+/* -------------------------------------------------------------------------- */
+
+export type PolinizadorTipo = 'abeja' | 'ave' | 'mamifero';
+
+export type Abundancia = 'abundante' | 'comun' | 'rara';
+
+export interface BiodiversidadPais {
+  id: number;
+  nombre: string;
+  codigo: string | null;
+  centro: Coordinates;
+  zoom: number | null;
+  total_municipios: number;
+  total_polinizadores: number;
+}
+
+export interface BiodiversidadPolinizador {
+  id: number;
+  nombre_cientifico: string;
+  nombre_comun: string;
+  tipo: PolinizadorTipo;
+  grupo: string;
+  descripcion: string | null;
+  es_nativo?: boolean;
+  abundancia?: Abundancia;
+}
+
+export interface BiodiversidadMunicipio {
+  id: number;
+  nombre: string;
+  pais: string;
+  pais_id: number;
+  departamento: string | null;
+  piso_climatico: string | null;
+  coordenadas: Coordinates | null;
+  total_polinizadores: number;
+  polinizadores_por_tipo: Record<PolinizadorTipo, number>;
+}
+
+export interface BiodiversidadPaisDetalle extends BiodiversidadPais {
+  municipios: BiodiversidadMunicipio[];
+  polinizadores: BiodiversidadPolinizador[];
+}
+
+export interface BiodiversidadMunicipiosResponse {
+  pais: string;
+  total: number;
+  data: BiodiversidadMunicipio[];
+}
+
+export interface MunicipioPolinizadores {
+  pais: string;
+  municipio: string;
+  departamento: string | null;
+  piso_climatico: string | null;
+  coordenadas: Coordinates | null;
+  total: number;
+  polinizadores_por_tipo: Record<PolinizadorTipo, number>;
+  data: BiodiversidadPolinizador[];
+}
+
+export interface BiodiversidadPolinizadorCatalogo extends BiodiversidadPolinizador {
+  paises: string[];
+  municipios: { municipio: string; pais: string }[];
+}
+
+export interface BiodiversidadCatalogoMunicipio {
+  id: number;
+  nombre: string;
+  departamento: string | null;
+  piso_climatico: string | null;
+  total_polinizadores: number;
+  polinizadores: BiodiversidadPolinizador[];
+}
+
+export interface BiodiversidadCatalogoPais {
+  id: number;
+  nombre: string;
+  municipios: BiodiversidadCatalogoMunicipio[];
 }
 
 /* -------------------------------------------------------------------------- */

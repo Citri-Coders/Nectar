@@ -2,20 +2,23 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
+import { useAuth } from '../lib/auth';
 import { centroDePais, cultivoLabel, tipoEspacioLabel } from '../lib/catalog';
 import { formatDateTime, formatNumber } from '../lib/format';
-import { validarUrl } from '../lib/validation';
+import { validarEntero, validarTexto, validarUrl, mensajesDeError } from '../lib/validation';
 import type { MonitoringHistory, MonitoringResult } from '../lib/types';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
+import { FormErrors } from '../components/ui/FormErrors';
 import { EmptyState, ErrorBlock, LoadingBlock } from '../components/ui/Feedback';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
 import { LocationPicker } from '../components/LocationPicker';
 
 export function Monitoreo() {
+  const { autenticado, puedeEscribir, esAdministrador } = useAuth();
   const [params, setParams] = useSearchParams();
   const spaces = useApi(() => api.getSpaces(), []);
   const species = useApi(() => api.getSpecies(), []);
@@ -26,8 +29,10 @@ export function Monitoreo() {
   const [fotoUrl, setFotoUrl] = useState('');
   const [notas, setNotas] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [errores, setErrores] = useState<string[]>([]);
   const [result, setResult] = useState<MonitoringResult | null>(null);
+  const [borrandoId, setBorrandoId] = useState<string | null>(null);
+  const [erroresBorrado, setErroresBorrado] = useState<string[]>([]);
 
   const history = useApi<MonitoringHistory | null>(
     () => (espacioId ? api.getMonitoringBySpace(espacioId) : Promise.resolve(null)),
@@ -66,32 +71,34 @@ export function Monitoreo() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setFormError(null);
 
-    if (!espacioId) {
-      setFormError('Selecciona el espacio donde realizaste el avistamiento.');
-      return;
-    }
-    if (!polinizador.trim()) {
-      setFormError('Indica qué polinizador avistaste.');
-      return;
-    }
-    const cantidadNum = Number(cantidad);
-    if (!Number.isFinite(cantidadNum) || cantidadNum <= 0) {
-      setFormError('La cantidad debe ser un número mayor a 0.');
-      return;
-    }
+    // Validación local: se acumulan todos los mensajes de una vez.
+    const nuevos: string[] = [];
+    if (!espacioId) nuevos.push('Selecciona el espacio donde realizaste el avistamiento.');
+
+    const errorPolinizador = validarTexto(polinizador, { min: 2, max: 100 });
+    if (errorPolinizador) nuevos.push(`Polinizador avistado: ${errorPolinizador}`);
+
+    const errorCantidad = validarEntero(cantidad, { min: 1, max: 1000 });
+    if (errorCantidad) nuevos.push(`Cantidad: ${errorCantidad}`);
+
     if (fotoInvalida) {
-      setFormError('La foto debe ser una URL válida, por ejemplo https://misitio.com/foto.jpg');
+      nuevos.push('Foto: debe ser una URL válida, por ejemplo https://misitio.com/foto.jpg');
+    }
+    if (notas.trim().length > 500) nuevos.push('Notas: no puede superar 500 caracteres.');
+
+    if (nuevos.length > 0) {
+      setErrores(nuevos);
       return;
     }
 
+    setErrores([]);
     setSubmitting(true);
     try {
       const payload = {
         espacio_id: espacioId,
         polinizador_avistado: polinizador.trim(),
-        cantidad: cantidadNum,
+        cantidad: Number(cantidad),
         ...(foto.url ? { foto_url: foto.url } : {}),
         ...(notas.trim() ? { notas: notas.trim() } : {}),
         // Se reutiliza la ubicación registrada en la segmentación.
@@ -107,13 +114,31 @@ export function Monitoreo() {
       spaces.reload();
       history.reload();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'No se pudo registrar el monitoreo.');
+      setErrores(mensajesDeError(error));
     } finally {
       setSubmitting(false);
     }
   }
 
   const monitoreos = history.data?.data ?? [];
+
+  async function handleEliminar(id: string) {
+    if (!window.confirm('¿Eliminar este avistamiento? Se descontarán sus puntos del espacio.')) {
+      return;
+    }
+
+    setBorrandoId(id);
+    setErroresBorrado([]);
+    try {
+      await api.deleteMonitoring(id);
+      spaces.reload();
+      history.reload();
+    } catch (error) {
+      setErroresBorrado(mensajesDeError(error));
+    } finally {
+      setBorrandoId(null);
+    }
+  }
 
   return (
     <>
@@ -135,6 +160,8 @@ export function Monitoreo() {
             subtitle="Campos obligatorios: espacio, polinizador y cantidad."
           />
 
+          {puedeEscribir ? (
+            <>
           <form className="stack stack-md" onSubmit={handleSubmit} noValidate>
             <Field label="Espacio" htmlFor="espacio" required>
               <Select
@@ -262,7 +289,7 @@ export function Monitoreo() {
               />
             </Field>
 
-            {formError ? <Alert tone="danger">{formError}</Alert> : null}
+            <FormErrors errores={errores} title="No se pudo registrar el avistamiento" />
 
             <Button
               type="submit"
@@ -321,6 +348,17 @@ export function Monitoreo() {
               </Alert>
             </div>
           ) : null}
+            </>
+          ) : (
+            <Alert
+              tone={autenticado ? 'warning' : 'info'}
+              title={autenticado ? 'Modo consulta (auditor)' : 'Inicia sesión para registrar'}
+            >
+              {autenticado
+                ? 'Tu rol de auditor permite consultar y revisar la información, pero no registrar ni eliminar avistamientos.'
+                : 'El registro de avistamientos requiere una cuenta. Puedes consultar el historial sin iniciar sesión.'}
+            </Alert>
+          )}
         </Card>
 
         {/* ----------------------------------------------------------- Historial */}
@@ -363,6 +401,12 @@ export function Monitoreo() {
               subtitle={history.data ? `${history.data.total} registros` : undefined}
             />
 
+            {erroresBorrado.length > 0 ? (
+              <div style={{ marginBottom: 'var(--space-4)' }}>
+                <FormErrors errores={erroresBorrado} title="No se pudo eliminar el avistamiento" />
+              </div>
+            ) : null}
+
             {!espacioId ? (
               <EmptyState icon="📍" title="Sin espacio seleccionado" />
             ) : history.loading ? (
@@ -385,6 +429,7 @@ export function Monitoreo() {
                         <th>Polinizador</th>
                         <th>Cant.</th>
                         <th>Pts</th>
+                        {esAdministrador ? <th>Acciones</th> : null}
                       </tr>
                     </thead>
                     <tbody>
@@ -394,6 +439,18 @@ export function Monitoreo() {
                           <td className="is-strong">{item.polinizador_avistado}</td>
                           <td className="mono">{item.cantidad}</td>
                           <td className="mono text-primary">+{item.puntos_otorgados}</td>
+                          {esAdministrador ? (
+                            <td>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                disabled={borrandoId === item.id}
+                                onClick={() => handleEliminar(item.id)}
+                              >
+                                {borrandoId === item.id ? 'Eliminando…' : 'Eliminar'}
+                              </Button>
+                            </td>
+                          ) : null}
                         </tr>
                       ))}
                     </tbody>

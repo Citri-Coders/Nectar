@@ -1,4 +1,4 @@
-import type { Coordinates } from './types';
+import type { Abundancia, Coordinates, PolinizadorTipo } from './types';
 
 /** Opción con valor de API + etiqueta legible + emoji para las tarjetas. */
 export interface CatalogOption {
@@ -122,6 +122,47 @@ export const PRACTICAS: CatalogOption[] = [
 ];
 
 /* -------------------------------------------------------------------------- */
+/* Polinizadores (biodiversidad)                                              */
+/* -------------------------------------------------------------------------- */
+
+export const TIPOS_POLINIZADOR: CatalogOption[] = [
+  { value: 'abeja', label: 'Abejas', icon: '🐝', desc: 'Sin aguijón y solitarias' },
+  { value: 'ave', label: 'Aves', icon: '🐦', desc: 'Colibríes nectarívoros' },
+  { value: 'mamifero', label: 'Mamíferos', icon: '🦇', desc: 'Murciélagos y otros' },
+];
+
+export const GRUPOS_POLINIZADOR: CatalogOption[] = [
+  { value: 'sin_aguijon', label: 'Abeja sin aguijón' },
+  { value: 'solitarias', label: 'Abeja solitaria' },
+  { value: 'ave_nectarivora', label: 'Ave nectarívora' },
+  { value: 'mamifero_nectarivoro', label: 'Mamífero nectarívoro' },
+];
+
+export const ABUNDANCIAS: CatalogOption[] = [
+  { value: 'abundante', label: 'Abundante' },
+  { value: 'comun', label: 'Común' },
+  { value: 'rara', label: 'Rara' },
+];
+
+/** Color de la insignia según la abundancia registrada. */
+export const TONO_POR_ABUNDANCIA: Record<Abundancia, 'tertiary' | 'neutral' | 'danger'> = {
+  abundante: 'tertiary',
+  comun: 'neutral',
+  rara: 'danger',
+};
+
+export const tipoPolinizadorLabel = (value?: string | null) => labelOf(TIPOS_POLINIZADOR, value);
+export const grupoPolinizadorLabel = (value?: string | null) => labelOf(GRUPOS_POLINIZADOR, value);
+export const abundanciaLabel = (value?: string | null) => labelOf(ABUNDANCIAS, value);
+
+/** Emoji del tipo de polinizador (abeja, ave o mamífero). */
+export function emojiPorTipoPolinizador(value?: string | null): string {
+  return TIPOS_POLINIZADOR.find((item) => item.value === value)?.icon ?? '🐝';
+}
+
+export const POLINIZADOR_TIPOS: PolinizadorTipo[] = ['abeja', 'ave', 'mamifero'];
+
+/* -------------------------------------------------------------------------- */
 /* Utilidades                                                                 */
 /* -------------------------------------------------------------------------- */
 
@@ -144,16 +185,16 @@ export const practicaLabel = (value?: string | null) => labelOf(PRACTICAS, value
 
 /** Color de pin en el mapa según el cultivo (para el componente Leaflet). */
 export const COLOR_POR_CULTIVO: Record<string, string> = {
-  cafe: '#245C43',
-  cacao: '#7d621a',
-  hortalizas: '#5f7a53',
-  frutales: '#d3ab34',
-  ornamentales: '#abc3a0',
-  sin_cultivo: '#4a7396',
+  cafe: '#1b533a',
+  cacao: '#854d0e',
+  hortalizas: '#2d7d4c',
+  frutales: '#eab308',
+  ornamentales: '#7ec090',
+  sin_cultivo: '#0ea5e9',
 };
 
 export function colorPorCultivo(cultivo?: string | null): string {
-  return (cultivo && COLOR_POR_CULTIVO[cultivo]) || '#245C43';
+  return (cultivo && COLOR_POR_CULTIVO[cultivo]) || '#1b533a';
 }
 
 /** Emoji del pin del mapa según el cultivo. */

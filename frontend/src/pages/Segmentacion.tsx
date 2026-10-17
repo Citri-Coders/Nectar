@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
 import {
@@ -14,12 +14,14 @@ import {
   tipoEspacioLabel,
 } from '../lib/catalog';
 import { formatNumber, grupoLabel } from '../lib/format';
+import { mensajesDeError, validarTexto } from '../lib/validation';
 import type { Coordinates, Space, SpaceInput } from '../lib/types';
 import { PageHeader, Stepper } from '../components/ui/PageHeader';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
 import { Badge, Chip } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
+import { FormErrors } from '../components/ui/FormErrors';
 import { ErrorBlock } from '../components/ui/Feedback';
 import { CheckOption, Field, Input, OptionGrid, Select } from '../components/ui/Form';
 import { LocationPicker } from '../components/LocationPicker';
@@ -52,20 +54,115 @@ const INITIAL: FormState = {
   coordenadas: null,
 };
 
+/** Datos de ubicación deducidos del punto marcado en el mapa. */
+interface UbicacionResuelta {
+  departamento_municipio: string;
+  comunidad: string;
+}
+
+/**
+ * Traduce unas coordenadas del mapa a `departamento/municipio` y
+ * `comunidad/barrio` (geocodificación inversa sobre OpenStreetMap).
+ * Devuelve null si el servicio no responde o no hay datos útiles.
+ */
+async function resolverUbicacion(
+  coords: Coordinates,
+  signal: AbortSignal
+): Promise<UbicacionResuelta | null> {
+  const params = new URLSearchParams({
+    format: 'jsonv2',
+    lat: String(coords.lat),
+    lon: String(coords.lng),
+    zoom: '14',
+    addressdetails: '1',
+    'accept-language': 'es',
+  });
+
+  const response = await fetch(`https://nominatim.openstreetmap.org/reverse?${params}`, {
+    signal,
+    headers: { Accept: 'application/json' },
+  });
+  if (!response.ok) return null;
+
+  const data = (await response.json()) as { address?: Record<string, string> };
+  const a = data.address ?? {};
+
+  const municipio =
+    a.city || a.town || a.village || a.municipality || a.city_district || a.county || '';
+  const departamento = a.state || a.province || a.region || '';
+  const comunidad =
+    a.neighbourhood ||
+    a.suburb ||
+    a.quarter ||
+    a.hamlet ||
+    a.village ||
+    a.city_district ||
+    a.residential ||
+    a.farm ||
+    a.croft ||
+    a.isolated_dwelling ||
+    a.borough ||
+    '';
+
+  const departamento_municipio =
+    municipio && departamento && municipio !== departamento
+      ? `${municipio}, ${departamento}`
+      : municipio || departamento;
+
+  // La comunidad no debe repetir el municipio ni el departamento.
+  const normalizar = (valor: string) => valor.trim().toLowerCase();
+  const comunidadLimpia =
+    comunidad &&
+    normalizar(comunidad) !== normalizar(municipio) &&
+    normalizar(comunidad) !== normalizar(departamento)
+      ? comunidad
+      : '';
+
+  if (!departamento_municipio && !comunidadLimpia) return null;
+  return { departamento_municipio, comunidad: comunidadLimpia };
+}
+
 export function Segmentacion() {
   const countries = useApi(() => api.getSpecies(), []);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>(INITIAL);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [erroresEnvio, setErroresEnvio] = useState<string[]>([]);
   const [result, setResult] = useState<Space | null>(null);
+  const [resolviendoUbicacion, setResolviendoUbicacion] = useState(false);
+  const geocodificacionRef = useRef<AbortController | null>(null);
 
   const paisOptions = useMemo(
     () => (countries.data?.data ?? []).map((item) => item.pais),
     [countries.data]
   );
+
+  // Municipios del país seleccionado, para el desplegable de Departamento / Municipio.
+  const municipiosPais = useApi(
+    () => (form.pais ? api.getBiodiversidadMunicipios(form.pais) : Promise.resolve(null)),
+    [form.pais]
+  );
+
+  const opcionesMunicipio = useMemo(() => {
+    const lista = municipiosPais.data?.data ?? [];
+    return lista.map((item) => ({
+      value:
+        item.departamento && item.departamento !== item.nombre
+          ? `${item.nombre}, ${item.departamento}`
+          : item.nombre,
+      label: item.departamento ? `${item.nombre} · ${item.departamento}` : item.nombre,
+    }));
+  }, [municipiosPais.data]);
+
+  // Si el punto del mapa completó un valor que no está en la lista, se conserva.
+  const opcionesMunicipioActual = useMemo(() => {
+    const actual = form.departamento_municipio.trim();
+    if (actual && !opcionesMunicipio.some((opcion) => opcion.value === actual)) {
+      return [{ value: actual, label: `${actual} (desde el mapa)` }, ...opcionesMunicipio];
+    }
+    return opcionesMunicipio;
+  }, [opcionesMunicipio, form.departamento_municipio]);
 
   // El mapa se encuadra en el país elegido (vista regional si aún no hay país).
   const encuadre = useMemo(() => centroDePais(form.pais), [form.pais]);
@@ -82,11 +179,46 @@ export function Segmentacion() {
     setErrors((prev) => ({ ...prev, [key]: '' }));
   }
 
+  // Cambiar de país reinicia el municipio: la lista depende del país elegido.
+  function cambiarPais(pais: string) {
+    setForm((prev) => ({ ...prev, pais, departamento_municipio: '' }));
+    setErrors((prev) => ({ ...prev, pais: '', departamento_municipio: '' }));
+  }
+
+  // Al marcar (o mover) el punto en el mapa, se completan el departamento/municipio
+  // y la comunidad/barrio a partir de las coordenadas elegidas.
+  async function ubicarEnMapa(coords: Coordinates | null) {
+    update('coordenadas', coords);
+
+    geocodificacionRef.current?.abort();
+    if (!coords) {
+      setResolviendoUbicacion(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    geocodificacionRef.current = controller;
+    setResolviendoUbicacion(true);
+
+    try {
+      const ubicacion = await resolverUbicacion(coords, controller.signal);
+      if (!ubicacion) return;
+      if (ubicacion.departamento_municipio)
+        update('departamento_municipio', ubicacion.departamento_municipio);
+      if (ubicacion.comunidad) update('comunidad', ubicacion.comunidad);
+    } catch {
+      // Si el servicio no responde, se conserva lo que la persona haya escrito.
+    } finally {
+      if (geocodificacionRef.current === controller) setResolviendoUbicacion(false);
+    }
+  }
+
   function validate(target: number): boolean {
     const next: Record<string, string> = {};
 
     if (target >= 0) {
-      if (!form.nombre_espacio.trim()) next.nombre_espacio = 'Ponle un nombre a tu espacio.';
+      const errorNombre = validarTexto(form.nombre_espacio, { min: 3, max: 80 });
+      if (errorNombre) next.nombre_espacio = errorNombre;
       if (!form.pais) next.pais = 'Selecciona un país soportado.';
     }
     if (target >= 1 && !form.tipo_espacio) next.tipo_espacio = 'Selecciona el tipo de espacio.';
@@ -115,8 +247,7 @@ export function Segmentacion() {
     }
 
     setSubmitting(true);
-    setSubmitError(null);
-    setMissingFields([]);
+    setErroresEnvio([]);
 
     const payload: SpaceInput = {
       nombre_espacio: form.nombre_espacio.trim(),
@@ -138,9 +269,7 @@ export function Segmentacion() {
       setResult(space);
       setStep(4);
     } catch (error) {
-      if (error instanceof Error) setSubmitError(error.message);
-      const payloadErrors = (error as { payload?: { campos_faltantes?: string[] } }).payload;
-      if (payloadErrors?.campos_faltantes) setMissingFields(payloadErrors.campos_faltantes);
+      setErroresEnvio(mensajesDeError(error));
     } finally {
       setSubmitting(false);
     }
@@ -151,8 +280,7 @@ export function Segmentacion() {
     setStep(0);
     setResult(null);
     setErrors({});
-    setSubmitError(null);
-    setMissingFields([]);
+    setErroresEnvio([]);
   }
 
   const progress = ((step + 1) / STEPS.length) * 100;
@@ -191,7 +319,7 @@ export function Segmentacion() {
                 <Input
                   id="nombre"
                   value={form.nombre_espacio}
-                  placeholder="Ej. Finca El Mirador, Patio Doña Marta…"
+                  placeholder="Ej. Finca La Colmena, Patio de casa…"
                   onChange={(event) => update('nombre_espacio', event.target.value)}
                 />
               </Field>
@@ -206,7 +334,7 @@ export function Segmentacion() {
                 <Select
                   id="pais"
                   value={form.pais}
-                  onChange={(event) => update('pais', event.target.value)}
+                  onChange={(event) => cambiarPais(event.target.value)}
                 >
                   <option value="">Selecciona un país…</option>
                   {paisOptions.map((pais) => (
@@ -220,21 +348,48 @@ export function Segmentacion() {
               <Field
                 label="Departamento / Municipio"
                 htmlFor="municipio"
-                hint="Necesario para el dashboard municipal. Ej. Matagalpa."
+                hint={
+                  resolviendoUbicacion
+                    ? 'Ubicando el punto en el mapa…'
+                    : !form.pais
+                      ? 'Primero selecciona un país para ver sus municipios.'
+                      : municipiosPais.loading
+                        ? 'Cargando municipios del país…'
+                        : municipiosPais.error
+                          ? 'No se pudieron cargar los municipios; puedes marcar la ubicación en el mapa.'
+                          : `${municipiosPais.data?.total ?? opcionesMunicipio.length} municipios disponibles.`
+                }
               >
-                <Input
+                <Select
                   id="municipio"
                   value={form.departamento_municipio}
-                  placeholder="Ej. Matagalpa"
+                  disabled={!form.pais || municipiosPais.loading}
                   onChange={(event) => update('departamento_municipio', event.target.value)}
-                />
+                >
+                  <option value="">
+                    {form.pais ? 'Selecciona un municipio…' : 'Primero selecciona un país…'}
+                  </option>
+                  {opcionesMunicipioActual.map((opcion) => (
+                    <option key={opcion.value} value={opcion.value}>
+                      {opcion.label}
+                    </option>
+                  ))}
+                </Select>
               </Field>
 
-              <Field label="Comunidad o barrio" htmlFor="comunidad">
+              <Field
+                label="Comunidad o barrio"
+                htmlFor="comunidad"
+                hint={
+                  resolviendoUbicacion
+                    ? 'Ubicando el punto en el mapa…'
+                    : 'Se completa automáticamente al marcar la ubicación en el mapa.'
+                }
+              >
                 <Input
                   id="comunidad"
                   value={form.comunidad}
-                  placeholder="Ej. El Arenal"
+                  placeholder="Ej. Comunidad El Roble"
                   onChange={(event) => update('comunidad', event.target.value)}
                 />
               </Field>
@@ -258,7 +413,7 @@ export function Segmentacion() {
                 value={form.coordenadas}
                 center={encuadre.centro}
                 zoom={encuadre.zoom}
-                onChange={(coords) => update('coordenadas', coords)}
+                onChange={ubicarEnMapa}
                 referenceLabel={form.pais ? `País seleccionado: ${form.pais}` : undefined}
               />
             </Field>
@@ -273,7 +428,7 @@ export function Segmentacion() {
                   <Button
                     variant="outlined"
                     size="sm"
-                    onClick={() => update('pais', paisSugerido)}
+                    onClick={() => cambiarPais(paisSugerido)}
                   >
                     Sí, usar {paisSugerido}
                   </Button>
@@ -351,14 +506,7 @@ export function Segmentacion() {
               </div>
             </div>
 
-            {submitError ? (
-              <Alert tone="danger" title="No se pudo registrar el espacio">
-                <p>{submitError}</p>
-                {missingFields.length ? (
-                  <p className="text-subtle">Campos faltantes: {missingFields.join(', ')}</p>
-                ) : null}
-              </Alert>
-            ) : null}
+            <FormErrors errores={erroresEnvio} title="No se pudo registrar el espacio" />
           </div>
         ) : null}
 

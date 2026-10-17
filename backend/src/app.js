@@ -8,6 +8,8 @@ import monitoringRoutes from './routes/monitoring.routes.js';
 import gamificationRoutes from './routes/gamification.routes.js';
 import municipioRoutes from './routes/municipio.routes.js';
 import sealRoutes from './routes/seal.routes.js';
+import biodiversidadRoutes from './routes/biodiversidad.routes.js';
+import authRoutes from './routes/auth.routes.js';
 
 const app = express();
 
@@ -20,6 +22,9 @@ app.use(morgan('dev'));
 app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'ok', message: 'API Néctar LatAm activa' });
 });
+
+// Rutas de autenticación (registro, login, logout, perfil)
+app.use('/api/v1/auth', authRoutes);
 
 // Rutas de especies nativas
 app.use('/api/v1/species', speciesRoutes);
@@ -39,6 +44,9 @@ app.use('/api/v1/municipio', municipioRoutes);
 // Rutas del Sello "Polinizador Amigo" (trazabilidad QR + adopciones)
 app.use('/api/v1/seal', sealRoutes);
 
+// Rutas de biodiversidad (SQLite): país > municipio > polinizador
+app.use('/api/v1/biodiversidad', biodiversidadRoutes);
+
 // Índice de la API: ayuda a descubrir los endpoints disponibles.
 app.get('/api/v1', (req, res) => {
   res.json({
@@ -46,12 +54,18 @@ app.get('/api/v1', (req, res) => {
     version: 'v1',
     endpoints: [
       'GET  /api/v1/health',
+      'POST /api/v1/auth/registro',
+      'POST /api/v1/auth/login',
+      'POST /api/v1/auth/logout',
+      'GET  /api/v1/auth/me',
       'GET  /api/v1/species[?pais=]',
       'GET  /api/v1/spaces[?pais=&tipo=]',
       'POST /api/v1/spaces/segmentation',
       'GET  /api/v1/spaces/:id',
+      'DELETE /api/v1/spaces/:id (admin)',
       'POST /api/v1/monitoring',
       'GET  /api/v1/monitoring/space/:espacio_id',
+      'DELETE /api/v1/monitoring/:id (admin)',
       'GET  /api/v1/gamification/leaderboard',
       'GET  /api/v1/municipio/catalogo',
       'GET  /api/v1/municipio/dashboard/:nombre_municipio[?pais=]',
@@ -59,6 +73,12 @@ app.get('/api/v1', (req, res) => {
       'GET  /api/v1/seal/producers',
       'GET  /api/v1/seal/verify/:id_o_slug',
       'POST /api/v1/seal/adopt',
+      'GET  /api/v1/biodiversidad/paises',
+      'GET  /api/v1/biodiversidad/pais/:pais',
+      'GET  /api/v1/biodiversidad/paises/:pais/municipios',
+      'GET  /api/v1/biodiversidad/municipios/:municipio/polinizadores[?pais=&tipo=]',
+      'GET  /api/v1/biodiversidad/polinizadores[?tipo=&grupo=&pais=&municipio=]',
+      'GET  /api/v1/biodiversidad/catalogo',
     ],
   });
 });

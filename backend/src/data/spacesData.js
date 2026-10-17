@@ -30,8 +30,8 @@ function normalizeSpaceInput(payload = {}) {
 
 /**
  * Crea y persiste un espacio aplicando el algoritmo de recomendación.
- * `options.puntosIniciales` solo lo usan las semillas (los espacios nuevos
- * siempre arrancan con los +10 puntos de bienvenida).
+ * Los espacios nuevos arrancan con los +10 puntos de bienvenida, salvo que se
+ * indique otro valor mediante `options.puntosIniciales`.
  */
 export function createSpace(payload = {}, options = {}) {
   const datos = normalizeSpaceInput(payload);
@@ -64,34 +64,14 @@ export function findSpaceById(id) {
   return spaces.find((space) => space.id === id) ?? null;
 }
 
-// ---------------------------------------------------------------------------
-// --- Semillas ---
-// 15 espacios: 14 en Matagalpa (Nicaragua) + 1 en Pitalito, Huila (Colombia).
-// Los 14 de Matagalpa se reparten en 3 comunidades: El Arenal, San Ramón y
-// Yasica Sur, para alimentar el dashboard municipal y el mapa territorial.
-// ---------------------------------------------------------------------------
-const SEMILLAS_ESPACIOS = [
-  // Nicaragua — Matagalpa (14 espacios)
-  { nombre_espacio: 'Finca El Mirador',          pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'El Arenal',  zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cafe',       practicas: ['franja_floral', 'cerca_viva', 'nidos'],          certificado: true,  puntos_iniciales: 70, coordenadas: { lat: 12.9255, lng: -85.9178 } },
-  // Colombia — Huila (1 espacio, queda fuera del dashboard de Matagalpa)
-  { nombre_espacio: 'Finca La Esperanza',        pais: 'Colombia',  departamento_municipio: 'Pitalito, Huila', comunidad: null,     zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cafe',       practicas: ['franja_floral', 'cerca_viva'],                   certificado: false, puntos_iniciales: 10, coordenadas: { lat: 1.8535, lng: -76.0504 } },
-  { nombre_espacio: 'Finca Los Cafetales',       pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'El Arenal',  zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cafe',       practicas: ['franja_floral', 'cerca_viva', 'nidos'],          certificado: true,  puntos_iniciales: 65, coordenadas: { lat: 12.9402, lng: -85.9081 } },
-  { nombre_espacio: 'Patio Doña Marta',          pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'El Arenal',  zona: 'urbana', tipo_espacio: 'patio_jardin',  cultivo_vegetacion: 'hortalizas', practicas: ['franja_floral', 'nidos', 'compostaje'],          certificado: false, puntos_iniciales: 70, coordenadas: { lat: 12.9180, lng: -85.9300 } },
-  { nombre_espacio: 'Escuela El Arenal',         pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'El Arenal',  zona: 'urbana', tipo_espacio: 'escuela',       cultivo_vegetacion: 'sin_cultivo', practicas: ['franja_floral', 'cerca_viva', 'nidos'],         certificado: true,  puntos_iniciales: 60, coordenadas: { lat: 12.9290, lng: -85.9120 } },
-  { nombre_espacio: 'Finca El Roble',            pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'El Arenal',  zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'frutales',   practicas: ['cerca_viva', 'nidos', 'compostaje'],             certificado: false, puntos_iniciales: 60, coordenadas: { lat: 12.9500, lng: -85.8900 } },
-  { nombre_espacio: 'Finca La Cumbre',           pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'El Arenal',  zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cafe',       practicas: ['franja_floral', 'cerca_viva', 'nidos'],          certificado: false, puntos_iniciales: 65, coordenadas: { lat: 12.9700, lng: -85.8800 } },
+/**
+ * Elimina un espacio por su id (solo administrador).
+ * Devuelve el espacio eliminado, o null si no existía.
+ */
+export function deleteSpace(id) {
+  const index = spaces.findIndex((space) => space.id === id);
+  if (index === -1) return null;
 
-  { nombre_espacio: 'Finca San Ramón',           pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'San Ramón',  zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cafe',       practicas: ['franja_floral', 'cerca_viva', 'nidos'],          certificado: true,  puntos_iniciales: 75, coordenadas: { lat: 12.8700, lng: -85.9500 } },
-  { nombre_espacio: 'Patio Familia López',       pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'San Ramón',  zona: 'urbana', tipo_espacio: 'patio_jardin',  cultivo_vegetacion: 'hortalizas', practicas: ['franja_floral', 'nidos', 'compostaje'],          certificado: false, puntos_iniciales: 60, coordenadas: { lat: 12.8760, lng: -85.9420 } },
-  { nombre_espacio: 'Finca La Esperanza Norte',  pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'San Ramón',  zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cacao',      practicas: ['cerca_viva', 'nidos'],                           certificado: true,  puntos_iniciales: 70, coordenadas: { lat: 12.8600, lng: -85.9700 } },
-  { nombre_espacio: 'Escuela San Ramón',         pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'San Ramón',  zona: 'urbana', tipo_espacio: 'escuela',       cultivo_vegetacion: 'sin_cultivo', practicas: ['franja_floral', 'cerca_viva'],                  certificado: false, puntos_iniciales: 50, coordenadas: { lat: 12.8820, lng: -85.9600 } },
-  { nombre_espacio: 'Finca Buenavista',          pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'San Ramón',  zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cafe',       practicas: ['franja_floral', 'cerca_viva', 'nidos'],          certificado: false, puntos_iniciales: 65, coordenadas: { lat: 12.8450, lng: -85.9250 } },
-
-  { nombre_espacio: 'Finca Yasica Sur',          pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'Yasica Sur', zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'cafe',       practicas: ['franja_floral', 'cerca_viva', 'nidos'],          certificado: true,  puntos_iniciales: 90, coordenadas: { lat: 13.0100, lng: -85.9300 } },
-  { nombre_espacio: 'Finca El Bosque',           pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'Yasica Sur', zona: 'rural', tipo_espacio: 'finca_agricola', cultivo_vegetacion: 'frutales',   practicas: ['cerca_viva', 'compostaje'],                      certificado: false, puntos_iniciales: 65, coordenadas: { lat: 13.0250, lng: -85.9500 } },
-  { nombre_espacio: 'Patio Comunitario Yasica',  pais: 'Nicaragua', departamento_municipio: 'Matagalpa', comunidad: 'Yasica Sur', zona: 'urbana', tipo_espacio: 'area_comunal',  cultivo_vegetacion: 'ornamentales', practicas: ['franja_floral', 'nidos'],                      certificado: false, puntos_iniciales: 65, coordenadas: { lat: 13.0050, lng: -85.9100 } },
-];
-
-for (const semilla of SEMILLAS_ESPACIOS) {
-  createSpace(semilla, { puntosIniciales: semilla.puntos_iniciales });
+  const [eliminado] = spaces.splice(index, 1);
+  return eliminado;
 }

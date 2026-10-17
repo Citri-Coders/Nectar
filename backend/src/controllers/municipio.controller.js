@@ -5,6 +5,14 @@ import {
   findCountryKey,
   getSupportedCountries,
 } from '../services/recommendation.service.js';
+import { responderValidacion, validarTexto } from '../utils/validacion.js';
+
+// Valida el nombre de municipio recibido por la URL.
+function validarMunicipio(res, nombreMunicipio) {
+  const mensaje = validarTexto(nombreMunicipio, { min: 2, max: 80 });
+  if (!mensaje) return null;
+  return responderValidacion(res, { campos_invalidos: { nombre_municipio: mensaje } });
+}
 
 function normalize(value) {
   return String(value ?? '')
@@ -104,6 +112,9 @@ export function getMunicipioDashboard(req, res) {
     return res.status(400).json({ message: error, paises_disponibles: getSupportedCountries() });
   }
 
+  const invalido = validarMunicipio(res, nombreMunicipio);
+  if (invalido) return invalido;
+
   const spaces = findMunicipioSpaces(nombreMunicipio, paisKey);
 
   if (spaces.length === 0) {
@@ -152,6 +163,9 @@ export function getMunicipioMapPoints(req, res) {
   if (error) {
     return res.status(400).json({ message: error, paises_disponibles: getSupportedCountries() });
   }
+
+  const invalido = validarMunicipio(res, nombreMunicipio);
+  if (invalido) return invalido;
 
   const spaces = findMunicipioSpaces(nombreMunicipio, paisKey);
 

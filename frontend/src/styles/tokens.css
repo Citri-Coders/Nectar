@@ -1,102 +1,154 @@
 /* ============================================================================
    Néctar LatAm · Design tokens
-   Paleta base tomada del manual de marca:
-     Primary   #245C43   (verde bosque)
-     Secondary #ABC3A0   (verde salvia)
-     Tertiary  #E8C65A   (dorado miel)
-     Neutral   #F8F7F0   (crema)
+   Paleta del manual de marca (actualizada):
+     Primary   #1b533a   (verde bosque · agroecología)
+     Secondary #facc15   (amarillo miel / néctar floral · CTA)
+     Superficies #ffffff / #f7f6f0 (marfil orgánico)
+     Tinta     #142017   (verde muy oscuro)
    Tipografía: Plus Jakarta Sans
+
+   NOTA: Los nombres `--color-*` son los del manual. Los nombres cortos
+   (`--primary-*`, `--secondary-*`, `--tertiary-*`, `--neutral-*`) se mantienen
+   como alias de compatibilidad para que todos los componentes existentes
+   sigan funcionando sin cambios.
    ========================================================================== */
 
 :root {
   /* ------------------------------------------------------------------ */
-  /* Escalas de color                                                    */
+  /* Tokens del manual · modo claro                                      */
   /* ------------------------------------------------------------------ */
 
-  /* Primary — #245C43 */
-  --primary-50: #eef4f0;
-  --primary-100: #d7e6dd;
-  --primary-200: #b0ccbb;
-  --primary-300: #7fae94;
-  --primary-400: #4f8b6d;
-  --primary-500: #2f6e51;
-  --primary-600: #245c43;
-  --primary-700: #1d4a36;
-  --primary-800: #163829;
-  --primary-900: #0f271c;
+  /* Primario — verde bosque / agroecología */
+  --color-primary-50: #eef7f0;
+  --color-primary-100: #d6ecdb;
+  --color-primary-200: #aed9b8;
+  --color-primary-300: #7ec090;
+  --color-primary-400: #51a66b;
+  --color-primary-500: #2d7d4c;
+  --color-primary-600: #1b533a; /* Verde bosque principal del hero */
+  --color-primary-700: #14402d;
+  --color-primary-800: #0f3022;
+  --color-primary-900: #0a2118;
+  --color-primary: var(--color-primary-600);
+  --color-primary-hover: var(--color-primary-700);
+  --color-primary-content: #ffffff;
 
-  /* Secondary — #ABC3A0 */
-  --secondary-50: #f4f7f1;
-  --secondary-100: #e6ecdf;
-  --secondary-200: #d2ddc7;
-  --secondary-300: #bdd1ae;
-  --secondary-400: #abc3a0;
-  --secondary-500: #93ad86;
-  --secondary-600: #79946c;
-  --secondary-700: #5f7a53;
+  /* Secundario — amarillo miel / néctar floral */
+  --color-secondary-50: #fefce8;
+  --color-secondary-100: #fef9c3;
+  --color-secondary-200: #fef08a;
+  --color-secondary-300: #fde047;
+  --color-secondary-400: #facc15;
+  --color-secondary-500: #eab308; /* Amarillo dorado del botón CTA */
+  --color-secondary-600: #ca8a04;
+  --color-secondary-700: #a16207;
+  --color-secondary-800: #854d0e;
+  --color-secondary-900: #713f12;
+  --color-secondary: var(--color-secondary-500);
+  --color-secondary-hover: var(--color-secondary-600);
+  --color-secondary-content: #1e293b;
 
-  /* Tertiary — #E8C65A */
-  --tertiary-50: #fdf9ec;
-  --tertiary-100: #faf1cf;
-  --tertiary-200: #f3e19f;
-  --tertiary-300: #edd073;
-  --tertiary-400: #e8c65a;
-  --tertiary-500: #d3ab34;
-  --tertiary-600: #ab8722;
-  --tertiary-700: #7d621a;
+  /* Fondos y superficies */
+  --color-bg-base: #ffffff;      /* blanco puro principal */
+  --color-bg-surface: #f7f6f0;   /* marfil / gris cálido orgánico del diseño */
+  --color-bg-elevated: #f1f0e8;  /* superficie secundaria / tarjetas neutras */
+  --color-border: #e2e1d7;
+  --color-border-subtle: #eeece2;
+  --color-border-strong: #cfcdbf; /* derivado: estados hover / foco */
 
-  /* Neutral — #F8F7F0 */
-  --neutral-50: #f8f7f0;
-  --neutral-100: #f1f0e7;
-  --neutral-200: #e6e5da;
-  --neutral-300: #d5d4c7;
-  --neutral-400: #b3b2a4;
-  --neutral-500: #8b8a7d;
-  --neutral-600: #63625a;
-  --neutral-700: #45443e;
-  --neutral-800: #2e2e29;
-  --neutral-900: #1b1b17;
+  /* Tipografía */
+  --color-text-main: #142017;   /* tinta oscura con matiz verde bosque */
+  --color-text-muted: #5c685f;  /* texto secundario / descripciones */
+  --color-text-subtle: #849187; /* metadatos y pie */
+  --color-text-inverse: #ffffff;
 
-  /* Acentos suaves para estados */
-  --danger-50: #fcefec;
-  --danger-100: #f8d9d3;
-  --danger-500: #c0392b;
-  --danger-600: #a82c1f;
+  /* Semántica / estados */
+  --color-danger: var(--color-error);
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #0ea5e9;
 
-  --info-50: #eef3f7;
-  --info-500: #4a7396;
+  /* ------------------------------------------------------------------ */
+  /* Alias de compatibilidad (nombres cortos usados por los componentes) */
+  /* ------------------------------------------------------------------ */
 
-  --sky-500: #5b8fb0;
+  /* Primary */
+  --primary-50: #eef7f0;
+  --primary-100: #d6ecdb;
+  --primary-200: #aed9b8;
+  --primary-300: #7ec090;
+  --primary-400: #51a66b;
+  --primary-500: #2d7d4c;
+  --primary-600: #1b533a;
+  --primary-700: #14402d;
+  --primary-800: #0f3022;
+  --primary-900: #0a2118;
+
+  /* Secondary — acento verde suave (misma familia que primary) */
+  --secondary-50: #eef7f0;
+  --secondary-100: #d6ecdb;
+  --secondary-200: #aed9b8;
+  --secondary-300: #7ec090;
+  --secondary-400: #51a66b;
+  --secondary-500: #2d7d4c;
+  --secondary-600: #1b533a;
+  --secondary-700: #14402d;
+
+  /* Tertiary — amarillo miel / CTA */
+  --tertiary-50: #fefce8;
+  --tertiary-100: #fef9c3;
+  --tertiary-200: #fef08a;
+  --tertiary-300: #fde047;
+  --tertiary-400: #facc15;
+  --tertiary-500: #eab308;
+  --tertiary-600: #ca8a04;
+  --tertiary-700: #a16207;
+
+  /* Neutral — grises cálidos con matiz orgánico */
+  --neutral-50: #ffffff;
+  --neutral-100: #f7f6f0;
+  --neutral-200: #f1f0e8;
+  --neutral-300: #e2e1d7;
+  --neutral-400: #cbcabf;
+  --neutral-500: #849187;
+  --neutral-600: #5c685f;
+  --neutral-700: #3c473f;
+  --neutral-800: #26332b;
+  --neutral-900: #142017;
+
+  /* Estados legacy */
+  --danger-50: #fef2f2;
+  --danger-100: #fee2e2;
+  --danger-500: #ef4444;
+  --danger-600: #dc2626;
+  --info-50: #f0f9ff;
+  --info-500: #0ea5e9;
+  --sky-500: #0ea5e9;
 
   /* ------------------------------------------------------------------ */
   /* Tokens semánticos                                                   */
   /* ------------------------------------------------------------------ */
-  --color-primary: var(--primary-600);
-  --color-primary-hover: var(--primary-700);
-  --color-primary-soft: var(--primary-50);
-  --color-secondary: var(--secondary-400);
-  --color-tertiary: var(--tertiary-400);
-  --color-tertiary-hover: var(--tertiary-500);
-  --color-danger: var(--danger-500);
-  --color-success: var(--primary-500);
-  --color-warning: var(--tertiary-500);
+  --color-primary-soft: var(--color-primary-50);
+  --color-tertiary: var(--color-secondary-400);
+  --color-tertiary-hover: var(--color-secondary-500);
 
-  --bg-app: #eff0e7;
-  --bg-surface: var(--neutral-50);
-  --bg-elevated: #ffffff;
-  --bg-subtle: var(--neutral-100);
-  --bg-inverted: #2b2b26;
-  --bg-muted: #e7e7dd;
+  --bg-app: var(--color-bg-surface);
+  --bg-surface: var(--color-bg-base);
+  --bg-elevated: var(--color-bg-base);
+  --bg-subtle: var(--color-bg-elevated);
+  --bg-muted: var(--color-bg-elevated);
+  --bg-inverted: #0a2118;
 
-  --text-strong: var(--neutral-900);
-  --text-default: var(--neutral-700);
-  --text-muted: var(--neutral-500);
-  --text-inverse: var(--neutral-50);
+  --text-strong: var(--color-text-main);
+  --text-default: var(--color-text-muted);
+  --text-muted: var(--color-text-subtle);
+  --text-inverse: var(--color-text-inverse);
   --text-on-primary: #ffffff;
 
-  --border-soft: rgba(27, 27, 23, 0.08);
-  --border-default: rgba(27, 27, 23, 0.14);
-  --border-strong: rgba(27, 27, 23, 0.24);
+  --border-soft: var(--color-border-subtle);
+  --border-default: var(--color-border);
+  --border-strong: var(--color-border-strong);
 
   /* ------------------------------------------------------------------ */
   /* Tipografía                                                          */
@@ -141,15 +193,99 @@
   --radius-xl: 28px;
   --radius-pill: 999px;
 
-  --shadow-xs: 0 1px 2px rgba(27, 27, 23, 0.04);
-  --shadow-sm: 0 2px 6px rgba(27, 27, 23, 0.05);
-  --shadow-md: 0 8px 20px -8px rgba(27, 27, 23, 0.14);
-  --shadow-lg: 0 18px 40px -18px rgba(27, 27, 23, 0.22);
-  --shadow-ring: 0 0 0 4px rgba(36, 92, 67, 0.12);
+  --shadow-xs: 0 1px 2px rgba(20, 32, 23, 0.04);
+  --shadow-sm: 0 2px 6px rgba(20, 32, 23, 0.05);
+  --shadow-md: 0 8px 20px -8px rgba(20, 32, 23, 0.14);
+  --shadow-lg: 0 18px 40px -18px rgba(20, 32, 23, 0.22);
+  --shadow-ring: 0 0 0 4px rgba(45, 125, 76, 0.16);
 
   --transition-fast: 140ms ease;
   --transition-base: 220ms cubic-bezier(0.22, 1, 0.36, 1);
 
   --container: 1180px;
   --nav-height: 72px;
+}
+
+/* ============================================================================
+   Tema oscuro · se activa con data-theme="dark" en <html> (o la clase .dark)
+
+   Los tokens del manual (`--color-primary-*`, `--color-secondary-*`, fondos,
+   texto y bordes) adoptan aquí la variante oscura. Los alias cortos de los
+   componentes se mantienen sobre la escala clara para preservar el contraste
+   ya validado de botones, insignias y tarjetas.
+   ========================================================================== */
+
+[data-theme='dark'],
+.dark {
+  /* Escala primaria oscura (verde esmeralda de alto contraste) */
+  --color-primary-50: #0a2118;
+  --color-primary-100: #0f3022;
+  --color-primary-200: #14402d;
+  --color-primary-300: #1b533a;
+  --color-primary-400: #2d7d4c;
+  --color-primary-500: #38a169;
+  --color-primary-600: #48bb78;
+  --color-primary-700: #68d391;
+  --color-primary-800: #9ae6b4;
+  --color-primary-900: #c6f6d5;
+  --color-primary: var(--color-primary-700);
+  --color-primary-hover: var(--color-primary-800);
+  --color-primary-content: #07130c;
+
+  /* Escala secundaria oscura (amarillo polen) */
+  --color-secondary-50: #713f12;
+  --color-secondary-100: #854d0e;
+  --color-secondary-200: #a16207;
+  --color-secondary-300: #ca8a04;
+  --color-secondary-400: #eab308;
+  --color-secondary-500: #facc15;
+  --color-secondary-600: #fde047;
+  --color-secondary-700: #fef08a;
+  --color-secondary-800: #fef9c3;
+  --color-secondary-900: #fefce8;
+  --color-secondary: var(--color-secondary-600);
+  --color-secondary-hover: var(--color-secondary-700);
+  --color-secondary-content: #121004;
+
+  /* Fondos y superficies */
+  --color-bg-base: #0c1410;
+  --color-bg-surface: #14201a;
+  --color-bg-elevated: #1c2b23;
+  --color-border: #25372d;
+  --color-border-subtle: #192720;
+  --color-border-strong: #35513f;
+
+  /* Tipografía */
+  --color-text-main: #ffffff;
+  --color-text-muted: #e2e8f0;
+  --color-text-subtle: #a0aec0;
+  --color-text-inverse: #0c1410;
+
+  /* Semánticos oscuros */
+  --color-primary-soft: rgba(45, 125, 76, 0.18);
+  --color-tertiary: var(--color-secondary-400);
+  --color-tertiary-hover: var(--color-secondary-300);
+
+  --bg-app: var(--color-bg-base);
+  --bg-surface: var(--color-bg-surface);
+  --bg-elevated: var(--color-bg-elevated);
+  --bg-subtle: var(--color-bg-elevated);
+  --bg-muted: var(--color-bg-elevated);
+  --bg-inverted: #07130c;
+
+  --text-strong: var(--color-text-main);
+  --text-default: var(--color-text-muted);
+  --text-muted: var(--color-text-subtle);
+  --text-inverse: var(--color-text-inverse);
+  --text-on-primary: #ffffff;
+
+  --border-soft: var(--color-border-subtle);
+  --border-default: var(--color-border);
+  --border-strong: var(--color-border-strong);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 10px 24px -10px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 22px 48px -20px rgba(0, 0, 0, 0.7);
+  --shadow-ring: 0 0 0 4px rgba(126, 192, 144, 0.26);
 }

@@ -1,48 +1,63 @@
-import { createMonitoring, listMonitoringBySpace } from '../data/monitoringData.js';
+import {
+  createMonitoring,
+  deleteMonitoring as removeMonitoring,
+  listMonitoringBySpace,
+} from '../data/monitoringData.js';
 import { findSpaceById } from '../data/spacesData.js';
+import {
+  esUrlValida,
+  hayErrores,
+  isBlank,
+  recortar,
+  responderValidacion,
+  validarEntero,
+  validarTexto,
+  validarTextoOpcional,
+} from '../utils/validacion.js';
 
-function isBlank(value) {
-  return value === undefined || value === null || String(value).trim() === '';
-}
-
-// Valida una URL http(s) con dominio, sin alterar el formato original.
-function isValidUrl(value) {
-  if (typeof value !== 'string') return false;
-  try {
-    const url = new URL(value.trim());
-    return (url.protocol === 'http:' || url.protocol === 'https:') && url.hostname.includes('.');
-  } catch {
-    return false;
-  }
-}
+// Límites de los campos del avistamiento.
+const CANTIDAD_MIN = 1;
+const CANTIDAD_MAX = 1000;
+const MAX_URL = 500;
+const MAX_NOTAS = 500;
 
 // POST /api/v1/monitoring
 export function registerMonitoring(req, res) {
   const body = req.body ?? {};
-
-  const camposFaltantes = ['espacio_id', 'polinizador_avistado', 'cantidad'].filter(
-    (field) => isBlank(body[field])
+  const camposFaltantes = ['espacio_id', 'polinizador_avistado', 'cantidad'].filter((field) =>
+    isBlank(body[field])
   );
-  if (camposFaltantes.length > 0) {
-    return res.status(400).json({
-      message: 'Faltan campos obligatorios para registrar el monitoreo.',
-      campos_faltantes: camposFaltantes,
+  const camposInvalidos = {};
+
+  if (!isBlank(body.polinizador_avistado)) {
+    camposInvalidos.polinizador_avistado = validarTexto(body.polinizador_avistado, {
+      min: 2,
+      max: 100,
     });
   }
 
-  const cantidad = Number(body.cantidad);
-  if (!Number.isFinite(cantidad) || cantidad <= 0) {
-    return res.status(400).json({
-      message: 'El campo "cantidad" debe ser un número mayor a 0.',
-    });
+  if (!isBlank(body.cantidad)) {
+    camposInvalidos.cantidad = validarEntero(body.cantidad, { min: CANTIDAD_MIN, max: CANTIDAD_MAX });
   }
 
-  if (!isBlank(body.foto_url) && !isValidUrl(body.foto_url)) {
-    return res.status(400).json({
-      message:
-        'El campo "foto_url" debe ser una URL válida con formato http(s)://dominio/ruta.',
-      campo: 'foto_url',
-    });
+  if (!isBlank(body.foto_url)) {
+    const url = recortar(body.foto_url);
+    if (url.length > MAX_URL) camposInvalidos.foto_url = `No puede superar ${MAX_URL} caracteres.`;
+    else if (!esUrlValida(url))
+      camposInvalidos.foto_url = 'Debe ser una URL válida con formato http(s)://dominio/ruta.';
+  }
+
+  if (!isBlank(body.notas)) {
+    camposInvalidos.notas = validarTextoOpcional(body.notas, { max: MAX_NOTAS });
+  }
+
+  // Se eliminan claves con valor null para dejar solo los errores reales.
+  for (const campo of Object.keys(camposInvalidos)) {
+    if (!camposInvalidos[campo]) delete camposInvalidos[campo];
+  }
+
+  if (hayErrores(camposFaltantes, camposInvalidos)) {
+    return responderValidacion(res, { campos_faltantes: camposFaltantes, campos_invalidos: camposInvalidos });
   }
 
   const space = findSpaceById(body.espacio_id);
@@ -56,9 +71,11 @@ export function registerMonitoring(req, res) {
   // segmentación, salvo que el cliente envíe una coordenada explícita.
   const { monitoreo, gamificacion } = createMonitoring({
     ...body,
-    cantidad,
+    cantidad: Number(body.cantidad),
+    polinizador_avistado: recortar(body.polinizador_avistado),
     coordenadas: body.coordenadas ?? space.coordenadas ?? null,
-    foto_url: isBlank(body.foto_url) ? null : String(body.foto_url).trim(),
+    foto_url: isBlank(body.foto_url) ? null : recortar(body.foto_url),
+    notas: isBlank(body.notas) ? null : recortar(body.notas),
   });
 
   return res.status(201).json({
@@ -90,5 +107,28 @@ export function getMonitoringBySpace(req, res) {
     nombre_espacio: space.nombre_espacio,
     total: data.length,
     data,
+  });
+}
+
+// DELETE /api/v1/monitoring/:id  (solo administrador)
+// Elimina el avistamiento y descuenta sus puntos al espacio.
+export function deleteMonitoring(req, res) {
+  const { id } = req.params;
+  const eliminado = removeMonitoring(id);
+
+  if (!eliminado) {
+    return res.status(404).json({
+      message: `No existe un avistamiento de monitoreo con el id "${id}".`,
+    });
+  }
+
+  const space = findSpaceById(eliminado.espacio_id);
+
+  return res.json({
+    mensaje: 'Avistamiento eliminado con éxito.',
+    monitoreo_id: id,
+    espacio_id: eliminado.espacio_id,
+    puntos_totales_espacio: space?.puntos_acumulados ?? 0,
+    insignia_actual: space?.insignia_actual ?? null,
   });
 }

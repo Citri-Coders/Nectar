@@ -19,7 +19,7 @@ function buildPopup(point: MapPoint): string {
     `<div>🐝 <strong>${escapeHtml(point.polinizador_principal ?? 'Polinizador nativo')}</strong></div>`,
     `<div>⭐ ${formatNumber(point.puntos)} puntos acumulados</div>`,
     point.certificado
-      ? '<div style="color:#7d621a;font-weight:600">🏅 Polinizador Amigo</div>'
+      ? '<div style="color:#a16207;font-weight:600">🏅 Polinizador Amigo</div>'
       : '',
   ]
     .filter(Boolean)
@@ -28,7 +28,7 @@ function buildPopup(point: MapPoint): string {
   return `
     <div style="min-width:190px">
       <strong style="font-size:14px">${escapeHtml(point.nombre ?? 'Espacio sin nombre')}</strong>
-      <div style="color:#63625a;font-size:12px;margin-top:2px">
+      <div style="color:#5c685f;font-size:12px;margin-top:2px">
         ${escapeHtml(tipoEspacioLabel(point.tipo))} · ${escapeHtml(cultivoLabel(point.cultivo))}
       </div>
       <div style="margin-top:10px;font-size:12px;display:grid;gap:4px">${rows}</div>

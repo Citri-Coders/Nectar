@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
+import { useAuth } from '../lib/auth';
 import type { MapPoint } from '../lib/types';
 import {
   cultivoLabel,
@@ -12,13 +13,18 @@ import {
 } from '../lib/catalog';
 import { formatDate, formatDateTime, formatNumber, grupoLabel } from '../lib/format';
 import { MapView } from '../components/MapView';
-import { ButtonLink } from '../components/ui/Button';
+import { Button, ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
 import { Badge, Chip } from '../components/ui/Badge';
+import { Alert } from '../components/ui/Alert';
 import { EmptyState, ErrorBlock, LoadingBlock } from '../components/ui/Feedback';
 
 export function EspacioDetalle() {
   const { id = '' } = useParams();
+  const { esAdministrador, puedeEscribir } = useAuth();
+  const navigate = useNavigate();
+  const [eliminando, setEliminando] = useState(false);
+  const [errorEliminar, setErrorEliminar] = useState<string | null>(null);
   const space = useApi(() => api.getSpace(id), [id]);
   const history = useApi(() => api.getMonitoringBySpace(id), [id]);
 
@@ -49,6 +55,26 @@ export function EspacioDetalle() {
   const monitoreos = history.data?.data ?? [];
   const totalPolinizadores = monitoreos.reduce((total, item) => total + item.cantidad, 0);
 
+  async function handleEliminar() {
+    if (
+      !window.confirm(
+        `¿Eliminar el espacio "${data.nombre_espacio ?? data.id}" y todos sus avistamientos? Esta acción no se puede deshacer.`
+      )
+    ) {
+      return;
+    }
+
+    setEliminando(true);
+    setErrorEliminar(null);
+    try {
+      await api.deleteSpace(data.id);
+      navigate('/espacios');
+    } catch (error) {
+      setErrorEliminar(error instanceof Error ? error.message : 'No se pudo eliminar el espacio.');
+      setEliminando(false);
+    }
+  }
+
   return (
     <div className="stack stack-lg animate-in">
       <div className="row-between row-wrap" style={{ alignItems: 'flex-end' }}>
@@ -67,14 +93,23 @@ export function EspacioDetalle() {
         </div>
 
         <div className="row row-wrap gap-3">
-          <ButtonLink to={`/monitoreo?espacio=${encodeURIComponent(data.id)}`} iconLeft="🐝">
-            Registrar avistamiento
-          </ButtonLink>
+          {puedeEscribir ? (
+            <ButtonLink to={`/monitoreo?espacio=${encodeURIComponent(data.id)}`} iconLeft="🐝">
+              Registrar avistamiento
+            </ButtonLink>
+          ) : null}
+          {esAdministrador ? (
+            <Button variant="danger" iconLeft="🗑" disabled={eliminando} onClick={handleEliminar}>
+              {eliminando ? 'Eliminando…' : 'Eliminar espacio'}
+            </Button>
+          ) : null}
           <ButtonLink to="/espacios" variant="outlined">
             Volver
           </ButtonLink>
         </div>
       </div>
+
+      {errorEliminar ? <Alert tone="danger">{errorEliminar}</Alert> : null}
 
       <div className="grid grid-3">
         <Card tone="elevated">

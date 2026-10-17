@@ -3,12 +3,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
 import { formatDate, formatM2, formatNumber, formatPercent, formatUsd } from '../lib/format';
+import {
+  esEmailValido,
+  mensajesDeError,
+  validarNumero,
+  validarTexto,
+} from '../lib/validation';
 import type { AdoptionResult } from '../lib/types';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button, ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
+import { FormErrors } from '../components/ui/FormErrors';
 import { ProgressBar } from '../components/ui/DataDisplay';
 import { EmptyState, ErrorBlock, LoadingBlock } from '../components/ui/Feedback';
 import { Field, Input, Select, Textarea } from '../components/ui/Form';
@@ -29,7 +36,7 @@ export function Sello() {
   const [monto, setMonto] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [errores, setErrores] = useState<string[]>([]);
   const [result, setResult] = useState<AdoptionResult | null>(null);
 
   const lista = producers.data?.data ?? [];
@@ -64,31 +71,38 @@ export function Sello() {
   function elegirProductor(id: string) {
     setEspacioId(id);
     setResult(null);
-    setFormError(null);
+    setErrores([]);
     window.setTimeout(() => adoptRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
 
   async function handleAdopt(event: FormEvent) {
     event.preventDefault();
-    setFormError(null);
 
-    if (!espacioId) {
-      setFormError('Selecciona la finca que quieres apadrinar.');
-      return;
+    // Validación local: se acumulan todos los mensajes de una vez.
+    const nuevos: string[] = [];
+    if (!espacioId) nuevos.push('Selecciona la finca que quieres apadrinar.');
+
+    const errorNombre = validarTexto(nombre, { min: 2, max: 100 });
+    if (errorNombre) nuevos.push(`Nombre: ${errorNombre}`);
+
+    const errorMetros = validarNumero(metros, { min: 1, max: 100000 });
+    if (errorMetros) nuevos.push(`Metros cuadrados: ${errorMetros}`);
+
+    if (monto.trim() !== '') {
+      const errorMonto = validarNumero(monto, { min: 0 });
+      if (errorMonto) nuevos.push(`Monto: ${errorMonto}`);
     }
-    if (!nombre.trim()) {
-      setFormError('Indica tu nombre o el de tu organización.');
-      return;
+    if (email.trim() && !esEmailValido(email)) {
+      nuevos.push('Correo: escribe un correo electrónico válido.');
     }
-    if (!Number.isFinite(metrosNum) || metrosNum <= 0) {
-      setFormError('Los metros cuadrados deben ser un número mayor a 0.');
-      return;
-    }
-    if (monto.trim() !== '' && (!Number.isFinite(montoNum) || montoNum < 0)) {
-      setFormError('El monto a pagar no puede ser negativo. Usa 0 o un valor mayor.');
+    if (mensaje.trim().length > 300) nuevos.push('Mensaje: no puede superar 300 caracteres.');
+
+    if (nuevos.length > 0) {
+      setErrores(nuevos);
       return;
     }
 
+    setErrores([]);
     setSubmitting(true);
     try {
       const response = await api.adoptHabitat({
@@ -102,7 +116,7 @@ export function Sello() {
       setResult(response);
       producers.reload();
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : 'No se pudo registrar la adopción.');
+      setErrores(mensajesDeError(error));
     } finally {
       setSubmitting(false);
     }
@@ -138,11 +152,11 @@ export function Sello() {
               }}
             >
               <div className="grow" style={{ minWidth: 240 }}>
-                <Field label="Verificar sello" htmlFor="verify" hint="Folio (SELLO-NIC-…) o slug (finca-el-mirador)">
+                <Field label="Verificar sello" htmlFor="verify" hint="Folio de certificación o slug de la finca">
                   <Input
                     id="verify"
                     value={verifyInput}
-                    placeholder="finca-el-mirador"
+                    placeholder="folio-o-slug"
                     onChange={(event) => setVerifyInput(event.target.value)}
                   />
                 </Field>
@@ -351,7 +365,7 @@ export function Sello() {
                 )}
               </Alert>
 
-              {formError ? <Alert tone="danger">{formError}</Alert> : null}
+              <FormErrors errores={errores} title="No se pudo registrar la adopción" />
 
               <Button
                 type="submit"

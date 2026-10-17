@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
+import { useAuth } from '../lib/auth';
 import { TIPOS_ESPACIO, cultivoLabel, tipoEspacioLabel } from '../lib/catalog';
 import { formatDate, formatNumber } from '../lib/format';
 import { PageHeader } from '../components/ui/PageHeader';
@@ -12,6 +13,7 @@ import { EmptyState, ErrorBlock, LoadingBlock } from '../components/ui/Feedback'
 import { Field, Input, Select } from '../components/ui/Form';
 
 export function Espacios() {
+  const { puedeEscribir } = useAuth();
   const [pais, setPais] = useState('');
   const [tipo, setTipo] = useState('');
   const [search, setSearch] = useState('');
@@ -36,7 +38,13 @@ export function Espacios() {
         icon="📍"
         title="Red de espacios de la comunidad"
         description="Fincas, patios, escuelas y áreas comunales registradas con su recomendación personalizada, puntos e insignias."
-        actions={<ButtonLink to="/segmentacion" iconLeft="＋">Registrar espacio</ButtonLink>}
+        actions={
+          puedeEscribir ? (
+            <ButtonLink to="/segmentacion" iconLeft="＋">
+              Registrar espacio
+            </ButtonLink>
+          ) : undefined
+        }
       />
 
       <Card tone="elevated" style={{ marginBottom: 'var(--space-8)' }}>
@@ -67,7 +75,7 @@ export function Espacios() {
             <Input
               id="f-search"
               value={search}
-              placeholder="Ej. El Mirador"
+              placeholder="Buscar por nombre"
               onChange={(event) => setSearch(event.target.value)}
             />
           </Field>
@@ -102,7 +110,13 @@ export function Espacios() {
           <EmptyState
             title="No hay espacios que coincidan"
             description="Prueba con otros filtros o registra el primer espacio de esta comunidad."
-            action={<ButtonLink to="/segmentacion" variant="outlined">Registrar un espacio</ButtonLink>}
+            action={
+              puedeEscribir ? (
+                <ButtonLink to="/segmentacion" variant="outlined">
+                  Registrar un espacio
+                </ButtonLink>
+              ) : undefined
+            }
           />
         ) : (
           <div className="grid grid-3">

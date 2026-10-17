@@ -64,6 +64,8 @@ export interface ButtonLinkProps {
   className?: string;
   children: ReactNode;
   target?: string;
+  /** Estado que se pasa a la ruta (por ejemplo, el destino tras el login). */
+  state?: unknown;
 }
 
 /** Enlace con apariencia de botón (usa el router). */
@@ -77,6 +79,7 @@ export function ButtonLink({
   className,
   children,
   target,
+  state,
 }: ButtonLinkProps) {
   const isExternal = /^(https?:)?\/\//.test(to);
 
@@ -96,7 +99,7 @@ export function ButtonLink({
   }
 
   return (
-    <Link to={to} className={cn(btnClass(variant, size, block), className)}>
+    <Link to={to} state={state} className={cn(btnClass(variant, size, block), className)}>
       {iconLeft}
       {children}
       {iconRight}

@@ -12,6 +12,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Base de datos SQLite generada (backend/db/schema.sql y seed.sql sí se versionan)
+backend/db/*.sqlite
+backend/db/*.sqlite-journal
+backend/db/*.sqlite-wal
+backend/db/*.sqlite-shm
+
 # OS files
 .DS_Store
 Thumbs.db

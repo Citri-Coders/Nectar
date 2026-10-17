@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 import App from './App';
+import { AuthProvider } from './lib/auth';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/components.css';
@@ -13,7 +14,9 @@ if (!container) throw new Error('No se encontró el elemento #root');
 createRoot(container).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 );

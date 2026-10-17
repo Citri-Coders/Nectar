@@ -26,10 +26,10 @@ body {
   background-color: var(--bg-app);
   background-image: radial-gradient(
       circle at 12% -10%,
-      rgba(171, 195, 160, 0.38),
+      rgba(81, 166, 107, 0.18),
       transparent 45%
     ),
-    radial-gradient(circle at 92% 0%, rgba(232, 198, 90, 0.22), transparent 40%);
+    radial-gradient(circle at 92% 0%, rgba(234, 179, 8, 0.12), transparent 40%);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -317,4 +317,55 @@ ol {
   .grid-4 { grid-template-columns: minmax(0, 1fr); }
 
   .container { padding-inline: var(--space-4); }
+}
+
+/* ============================================================================
+   Tema oscuro · ajustes de base
+   ========================================================================== */
+
+[data-theme='dark'] body {
+  background-image: radial-gradient(
+      circle at 12% -10%,
+      rgba(45, 125, 76, 0.22),
+      transparent 45%
+    ),
+    radial-gradient(circle at 92% 0%, rgba(234, 179, 8, 0.12), transparent 40%);
+}
+
+[data-theme='dark'] a {
+  color: var(--primary-300);
+}
+
+[data-theme='dark'] a:hover {
+  color: var(--primary-200);
+}
+
+[data-theme='dark'] .eyebrow {
+  color: var(--primary-300);
+}
+
+[data-theme='dark'] .text-primary {
+  color: var(--primary-300);
+}
+
+[data-theme='dark'] .text-tertiary {
+  color: var(--tertiary-300);
+}
+
+[data-theme='dark'] ::selection {
+  background: var(--primary-700);
+  color: var(--neutral-50);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: var(--neutral-700);
+  border-color: var(--bg-surface);
+}
+
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-600);
 }

@@ -1,5 +1,6 @@
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
+import { useAuth } from '../lib/auth';
 import { ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
@@ -68,6 +69,7 @@ const PASOS = [
 ];
 
 export function Home() {
+  const { autenticado } = useAuth();
   const { data, loading, error, reload } = useApi(async () => {
     const [species, producers, leaderboard] = await Promise.all([
       api.getSpecies(),
@@ -81,12 +83,17 @@ export function Home() {
   const certificados = data?.producers.total ?? null;
   const paises = data?.species.total ?? null;
 
+  // Sin sesión, los accesos llevan al login y vuelven al módulo tras entrar.
+  const destino = (ruta: string) => (autenticado ? ruta : '/login');
+  const destinoEstado = (ruta: string) =>
+    autenticado ? undefined : { from: ruta, mensaje: 'Inicia sesión para continuar.' };
+
   return (
     <div className="stack stack-lg">
       {/* ---------------------------------------------------------------- Hero */}
       <section className="hero animate-in">
         <div className="hero__content">
-          <span className="eyebrow eyebrow--inverse">Rally LatAm 2026 · Desafío 03</span>
+          
           <h1 className="display" style={{ marginTop: 'var(--space-4)' }}>
             Un modelo, mil paisajes.
           </h1>
@@ -96,10 +103,21 @@ export function Home() {
             certificamos y financiamos hábitats florales.
           </p>
           <div className="hero__actions">
-            <ButtonLink to="/segmentacion" variant="tertiary" size="lg" iconLeft="🌼">
-              Crear mi plan de paisaje
+            <ButtonLink
+              to={destino('/segmentacion')}
+              state={destinoEstado('/segmentacion')}
+              variant="tertiary"
+              size="lg"
+              iconLeft="🌼"
+            >
+              {autenticado ? 'Crear mi plan de paisaje' : 'Inicia sesión para comenzar'}
             </ButtonLink>
-            <ButtonLink to="/municipio" variant="outlined" size="lg">
+            <ButtonLink
+              to={destino('/municipio')}
+              state={destinoEstado('/municipio')}
+              variant="outlined"
+              size="lg"
+            >
               Dashboard municipal
             </ButtonLink>
           </div>
@@ -160,7 +178,13 @@ export function Home() {
                 {module.description}
               </p>
               <div style={{ marginTop: 'var(--space-5)' }}>
-                <ButtonLink to={module.to} variant="ghost" size="sm" iconRight="→">
+                <ButtonLink
+                  to={destino(module.to)}
+                  state={destinoEstado(module.to)}
+                  variant="ghost"
+                  size="sm"
+                  iconRight="→"
+                >
                   {module.cta}
                 </ButtonLink>
               </div>
@@ -198,8 +222,12 @@ export function Home() {
               de bienvenida.
             </p>
             <div style={{ marginTop: 'var(--space-6)' }} className="row row-wrap gap-3">
-              <ButtonLink to="/segmentacion" variant="tertiary">
-                Generar plan personalizado
+              <ButtonLink
+                to={destino('/segmentacion')}
+                state={destinoEstado('/segmentacion')}
+                variant="tertiary"
+              >
+                {autenticado ? 'Generar plan personalizado' : 'Inicia sesión para generar tu plan'}
               </ButtonLink>
             </div>
           </Card>

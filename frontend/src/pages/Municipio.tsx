@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
-import { MUNICIPIOS_SUGERIDOS_POR_PAIS } from '../lib/catalog';
+import { COLOR_POR_CULTIVO, MUNICIPIOS_SUGERIDOS_POR_PAIS } from '../lib/catalog';
 import { formatNumber, formatPercent } from '../lib/format';
 import type { Coordinates } from '../lib/types';
 import { MapView } from '../components/MapView';
@@ -368,22 +368,22 @@ export function Municipio() {
 
             <div className="map-legend">
               <span className="map-legend__item">
-                <span className="legend-dot" style={{ background: '#245C43' }} /> Café
+                <span className="legend-dot" style={{ background: COLOR_POR_CULTIVO.cafe }} /> Café
               </span>
               <span className="map-legend__item">
-                <span className="legend-dot" style={{ background: '#7d621a' }} /> Cacao
+                <span className="legend-dot" style={{ background: COLOR_POR_CULTIVO.cacao }} /> Cacao
               </span>
               <span className="map-legend__item">
-                <span className="legend-dot" style={{ background: '#d3ab34' }} /> Frutales
+                <span className="legend-dot" style={{ background: COLOR_POR_CULTIVO.frutales }} /> Frutales
               </span>
               <span className="map-legend__item">
-                <span className="legend-dot" style={{ background: '#5f7a53' }} /> Hortalizas
+                <span className="legend-dot" style={{ background: COLOR_POR_CULTIVO.hortalizas }} /> Hortalizas
               </span>
               <span className="map-legend__item">
-                <span className="legend-dot" style={{ background: '#4a7396' }} /> Sin cultivo
+                <span className="legend-dot" style={{ background: COLOR_POR_CULTIVO.sin_cultivo }} /> Sin cultivo
               </span>
               <span className="map-legend__item">
-                <span className="legend-dot" style={{ background: '#abc3a0' }} /> Ornamentales
+                <span className="legend-dot" style={{ background: COLOR_POR_CULTIVO.ornamentales }} /> Ornamentales
               </span>
             </div>
           </Card>
