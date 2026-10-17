@@ -57,14 +57,3 @@ export function grupoLabel(grupo?: string | null): string {
   if (grupo === 'solitarias') return 'Abejas solitarias';
   return 'Polinizadores nativos';
 }
-
-/** Extrae solo el nombre común entre paréntesis: "Xylocopa (Abeja Carpintera)". */
-export function commonName(cientifico: string): string | null {
-  const match = cientifico.match(/\(([^)]+)\)/);
-  return match ? match[1] : null;
-}
-
-/** "Melipona beecheii (Abeja Chupapié)" -> "Melipona beecheii" */
-export function scientificName(value: string): string {
-  return value.replace(/\s*\([^)]*\)\s*$/, '').trim();
-}

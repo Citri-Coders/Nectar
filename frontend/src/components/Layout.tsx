@@ -55,7 +55,7 @@ export function Layout() {
             type="button"
             className="nav-toggle"
             aria-expanded={open}
-            aria-label="Abrir menú de navegación"
+            aria-label={open ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
             onClick={() => setOpen((value) => !value)}
           >
             {open ? '✕' : '☰'}

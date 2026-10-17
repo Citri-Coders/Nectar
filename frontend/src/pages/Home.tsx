@@ -3,7 +3,7 @@ import { useApi } from '../hooks/useApi';
 import { ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
-import { LoadingBlock } from '../components/ui/Feedback';
+import { LoadingBlock, ErrorBlock } from '../components/ui/Feedback';
 import { formatNumber } from '../lib/format';
 
 const MODULES = [
@@ -68,7 +68,7 @@ const PASOS = [
 ];
 
 export function Home() {
-  const { data, loading } = useApi(async () => {
+  const { data, loading, error, reload } = useApi(async () => {
     const [species, producers, leaderboard] = await Promise.all([
       api.getSpecies(),
       api.getProducers(),
@@ -130,6 +130,7 @@ export function Home() {
       </section>
 
       {loading ? <LoadingBlock label="Conectando con la API Néctar LatAm…" /> : null}
+      {error ? <ErrorBlock message={error} onRetry={reload} /> : null}
 
       {/* ------------------------------------------------------------- Módulos */}
       <section>

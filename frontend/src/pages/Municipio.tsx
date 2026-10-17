@@ -72,9 +72,10 @@ export function Municipio() {
               consultar(draft);
             }}
           >
-            <Field label="" htmlFor="municipio-buscar">
+            <Field htmlFor="municipio-buscar">
               <Input
                 id="municipio-buscar"
+                aria-label="Municipio a consultar"
                 list="municipios"
                 value={draft}
                 placeholder="Ej. Matagalpa"
@@ -132,7 +133,7 @@ export function Municipio() {
         </div>
       ) : null}
 
-      {dashboard.data && kpis ? (
+      {!dashboard.loading && dashboard.data && kpis ? (
         <div className="stack stack-lg animate-in">
           <div className="row-between row-wrap">
             <div>

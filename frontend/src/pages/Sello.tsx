@@ -50,12 +50,13 @@ export function Sello() {
   function verificar() {
     const limpio = verifyInput.trim();
     if (!limpio) return;
-    if (limpio.startsWith('http')) {
-      const parts = limpio.split('/');
-      navigate(`/sello/verificar/${encodeURIComponent(parts[parts.length - 1])}`);
-      return;
-    }
-    navigate(`/sello/verificar/${encodeURIComponent(limpio)}`);
+
+    // Acepta un folio, un slug, un id de espacio o una URL completa
+    // (con o sin barra final) y navega siempre a la ficha pública.
+    const candidato = limpio.replace(/\/+$/, '').split('/').filter(Boolean).pop() ?? '';
+    if (!candidato) return;
+
+    navigate(`/sello/verificar/${encodeURIComponent(candidato)}`);
   }
 
   function elegirProductor(id: string) {

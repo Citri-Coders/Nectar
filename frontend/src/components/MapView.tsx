@@ -106,11 +106,11 @@ export function MapView({ points, center, zoom = 12 }: MapViewProps) {
     });
 
     if (corners.length === 1) {
-      map.setView(corners[0], 14);
+      map.setView(corners[0], zoom);
     } else if (corners.length > 1) {
       map.fitBounds(L.latLngBounds(corners).pad(0.25), { maxZoom: 14 });
     }
-  }, [points]);
+  }, [points, zoom]);
 
   return <div ref={containerRef} className="map-canvas" role="application" aria-label="Mapa de espacios registrados" />;
 }

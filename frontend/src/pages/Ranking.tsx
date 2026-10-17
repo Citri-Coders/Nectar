@@ -112,9 +112,10 @@ export function Ranking() {
                 subtitle={`${filtered.length} de ${entries.length} espacios`}
                 action={
                   <div style={{ minWidth: 200 }}>
-                    <Field label="" htmlFor="buscar-rank">
+                    <Field htmlFor="buscar-rank">
                       <Input
                         id="buscar-rank"
+                        aria-label="Buscar espacio o municipio"
                         value={search}
                         placeholder="Buscar espacio, municipio…"
                         onChange={(event) => setSearch(event.target.value)}

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
+import type { MapPoint } from '../lib/types';
 import {
   cultivoLabel,
   pisoLabel,
@@ -19,6 +21,25 @@ export function EspacioDetalle() {
   const { id = '' } = useParams();
   const space = useApi(() => api.getSpace(id), [id]);
   const history = useApi(() => api.getMonitoringBySpace(id), [id]);
+
+  // Punto del mapa con identidad estable (evita redibujar los pines en cada render).
+  const mapaPuntos = useMemo<MapPoint[]>(() => {
+    const data = space.data;
+    if (!data || !data.coordenadas) return [];
+    return [
+      {
+        id: data.id,
+        nombre: data.nombre_espacio,
+        tipo: data.tipo_espacio,
+        cultivo: data.cultivo_vegetacion,
+        lat: data.coordenadas.lat,
+        lng: data.coordenadas.lng,
+        polinizador_principal: data.polinizador_principal,
+        puntos: data.puntos_acumulados,
+        certificado: data.certificado,
+      },
+    ];
+  }, [space.data]);
 
   if (space.loading) return <LoadingBlock label="Cargando ficha del espacio…" />;
   if (space.error) return <ErrorBlock message={space.error} onRetry={space.reload} />;
@@ -160,23 +181,7 @@ export function EspacioDetalle() {
 
           {data.coordenadas ? (
             <Card tone="elevated" padding="none" className="map-shell">
-              <MapView
-                points={[
-                  {
-                    id: data.id,
-                    nombre: data.nombre_espacio,
-                    tipo: data.tipo_espacio,
-                    cultivo: data.cultivo_vegetacion,
-                    lat: data.coordenadas.lat,
-                    lng: data.coordenadas.lng,
-                    polinizador_principal: data.polinizador_principal,
-                    puntos: data.puntos_acumulados,
-                    certificado: data.certificado,
-                  },
-                ]}
-                center={data.coordenadas}
-                zoom={14}
-              />
+              <MapView points={mapaPuntos} center={data.coordenadas} zoom={14} />
             </Card>
           ) : null}
         </div>

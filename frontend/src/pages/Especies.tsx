@@ -24,7 +24,9 @@ export function Especies() {
     if (!current) return { aptas: 0, total: 0 };
     const total = current.catalogoPlantas.length;
     const aptas = piso
-      ? current.catalogoPlantas.filter((planta) => planta.climas.includes(piso)).length
+      ? current.catalogoPlantas.filter(
+          (planta) => !planta.climas.length || planta.climas.includes(piso)
+        ).length
       : total;
     return { aptas, total };
   }, [current, piso]);
@@ -57,13 +59,12 @@ export function Especies() {
 
       {current ? (
         <div className="stack stack-lg">
-          <div className="nav-links" role="tablist" aria-label="Países">
+          <div className="nav-links" role="group" aria-label="Países">
             {countries.map((item) => (
               <button
                 key={item.pais}
                 type="button"
-                role="tab"
-                aria-selected={item.pais === current.pais}
+                aria-pressed={item.pais === current.pais}
                 className={cn('nav-link', item.pais === current.pais && 'nav-link--active')}
                 onClick={() => setActivePais(item.pais)}
               >
@@ -132,7 +133,7 @@ export function Especies() {
             />
             <div className="grid grid-auto-sm">
               {current.catalogoPlantas.map((planta) => {
-                const apta = !piso || planta.climas.includes(piso);
+                const apta = !piso || planta.climas.length === 0 || planta.climas.includes(piso);
                 return (
                   <div
                     key={planta.nombre}

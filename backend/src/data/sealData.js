@@ -98,7 +98,9 @@ export function findCertification(idOSlug) {
   return (
     certificaciones.find(
       (cert) =>
-        normalize(cert.espacio_id) === objetivo || normalize(cert.slug) === objetivo
+        normalize(cert.espacio_id) === objetivo ||
+        normalize(cert.slug) === objetivo ||
+        normalize(cert.folio_certificacion) === objetivo
     ) ?? null
   );
 }

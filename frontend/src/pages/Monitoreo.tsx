@@ -41,7 +41,7 @@ export function Monitoreo() {
   );
 
   useEffect(() => {
-    if (espacioId) setParams({ espacio: espacioId }, { replace: true });
+    setParams(espacioId ? { espacio: espacioId } : {}, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [espacioId]);
 

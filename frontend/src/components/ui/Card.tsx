@@ -58,7 +58,3 @@ export function CardHead({ title, subtitle, action }: CardHeadProps) {
     </header>
   );
 }
-
-export function CardDivider() {
-  return <hr className="card__divider" />;
-}

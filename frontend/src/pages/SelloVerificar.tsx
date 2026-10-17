@@ -2,12 +2,12 @@ import { Link, useParams } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useApi } from '../hooks/useApi';
 import { formatDate, formatM2, formatPercent } from '../lib/format';
-import { ButtonLink } from '../components/ui/Button';
+import { Button, ButtonLink } from '../components/ui/Button';
 import { Card, CardHead } from '../components/ui/Card';
 import { Badge } from '../components/ui/Badge';
 import { Alert } from '../components/ui/Alert';
 import { ProgressBar } from '../components/ui/DataDisplay';
-import { ErrorBlock, LoadingBlock } from '../components/ui/Feedback';
+import { LoadingBlock } from '../components/ui/Feedback';
 
 export function SelloVerificar() {
   const { slug = '' } = useParams();
@@ -33,9 +33,9 @@ export function SelloVerificar() {
             <ButtonLink to="/" variant="outlined">
               Volver al inicio
             </ButtonLink>
-          </div>
-          <div style={{ marginTop: 'var(--space-5)' }}>
-            <ErrorBlock message={ficha.error} onRetry={ficha.reload} />
+            <Button variant="ghost" onClick={ficha.reload}>
+              Reintentar
+            </Button>
           </div>
         </Card>
       </div>

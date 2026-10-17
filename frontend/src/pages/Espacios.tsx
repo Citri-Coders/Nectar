@@ -74,7 +74,7 @@ export function Espacios() {
         </div>
 
         <div className="row row-wrap gap-3" style={{ marginTop: 'var(--space-4)' }}>
-          <Badge tone="primary">{formatNumber(spaces.data?.total ?? 0)} espacios</Badge>
+          <Badge tone="primary">{formatNumber(list.length)} espacios</Badge>
           {pais ? <Badge tone="secondary">{pais}</Badge> : null}
           {tipo ? <Badge tone="secondary">{tipoEspacioLabel(tipo)}</Badge> : null}
           {search ? <Badge tone="tertiary">búsqueda: “{search}”</Badge> : null}

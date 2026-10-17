@@ -24,7 +24,7 @@ router.get('/', (req, res) => {
   if (!encontrado) {
     return res.status(404).json({
       message: `No se encontraron especies registradas para el país "${pais}".`,
-      paisesDisponibles: Object.keys(speciesData),
+      paises_disponibles: Object.keys(speciesData),
     });
   }
 

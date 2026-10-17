@@ -82,10 +82,6 @@ function query(params: Record<string, string | undefined>): string {
 }
 
 export const api = {
-  /* Health ----------------------------------------------------------------- */
-  health: () =>
-    request<{ status: string; message: string }>('/health'),
-
   /* Especies --------------------------------------------------------------- */
   getSpecies: (pais?: string) =>
     request<ListResponse<SpeciesCountry>>(`/species${query({ pais })}`),

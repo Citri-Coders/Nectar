@@ -1,5 +1,3 @@
-import type { Coordinates } from './types';
-
 /** Opción con valor de API + etiqueta legible + emoji para las tarjetas. */
 export interface CatalogOption {
   value: string;
@@ -114,9 +112,6 @@ export const EMOJI_POR_CULTIVO: Record<string, string> = {
 export function emojiPorCultivo(cultivo?: string | null): string {
   return (cultivo && EMOJI_POR_CULTIVO[cultivo]) || '🐝';
 }
-
-/** Coordenada de respaldo (Matagalpa, Nicaragua) para el mapa municipal. */
-export const FALLBACK_CENTER: Coordinates = { lat: 12.9255, lng: -85.9178 };
 
 /** Municipios sugeridos según las semillas del backend. */
 export const MUNICIPIOS_SUGERIDOS = ['Matagalpa', 'Pitalito, Huila'];
