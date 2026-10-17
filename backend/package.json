@@ -1,0 +1,24 @@
+{
+  "name": "nectar-latam-backend",
+  "version": "1.0.0",
+  "description": "API backend de Néctar LatAm — conservación de polinizadores nativos y agroecología comunitaria en Latinoamérica",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js"
+  },
+  "keywords": [
+    "nectar",
+    "latam",
+    "polinizadores",
+    "agroecologia",
+    "express"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "morgan": "^1.10.0"
+  }
+}
