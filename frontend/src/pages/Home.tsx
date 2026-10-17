@@ -94,6 +94,47 @@ export function Home() {
       <section className="hero animate-in">
         <div className="hero__content">
           
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+          
           <h1 className="display" style={{ marginTop: 'var(--space-4)' }}>
             Un modelo, mil paisajes.
           </h1>

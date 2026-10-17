@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/cn';
 import { rolLabel, useAuth } from '../lib/auth';
@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { to: '/espacios', label: 'Espacios' },
   { to: '/monitoreo', label: 'Monitoreo' },
   { to: '/ranking', label: 'Ranking' },
-  { to: '/municipio', label: 'Municipio' },
   { to: '/sello', label: 'Sello' },
 ];
 
@@ -20,7 +19,7 @@ function Brand() {
   return (
     <Link to="/" className="brand" aria-label="Néctar, ir al inicio">
       <span className="brand__mark" aria-hidden>
-        🐝
+        <img src="/Néctar_Logo-02.png" alt="" />
       </span>
       <span>
         <span className="brand__name">Néctar</span>
@@ -35,10 +34,66 @@ export function Layout() {
   const [theme, setTheme] = useState<Theme>(() => initialTheme());
   const { usuario, logout } = useAuth();
   const navigate = useNavigate();
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+
+  // Cierra el menú desplegable al pulsar Escape, al tocar fuera de la barra o
+  // al volver a una pantalla de escritorio (donde los módulos siempre se ven).
+  useEffect(() => {
+    if (!open) return;
+
+    function cerrarSiFuera(event: PointerEvent) {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) setOpen(false);
+    }
+    function cerrarConEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+    function cerrarEnEscritorio(event: MediaQueryListEvent) {
+      if (event.matches) setOpen(false);
+    }
+
+    const escritorio = window.matchMedia('(min-width: 1201px)');
+    document.addEventListener('pointerdown', cerrarSiFuera);
+    document.addEventListener('keydown', cerrarConEscape);
+    escritorio.addEventListener('change', cerrarEnEscritorio);
+
+    return () => {
+      document.removeEventListener('pointerdown', cerrarSiFuera);
+      document.removeEventListener('keydown', cerrarConEscape);
+      escritorio.removeEventListener('change', cerrarEnEscritorio);
+    };
+  }, [open]);
+
+  // Efecto de scroll (misma lógica que el prototipo): marca la barra y el hero
+  // con la clase `.scrolled`.
+  useEffect(() => {
+    const navbar = navRef.current;
+    if (!navbar) return;
+
+    let frame = 0;
+    function actualizar() {
+      frame = 0;
+      const scrollY = window.scrollY;
+      navbar!.classList.toggle('scrolled', scrollY > 50);
+
+      const hero = document.querySelector('.hero');
+      if (hero) hero.classList.toggle('scrolled', scrollY > window.innerHeight * 0.3);
+    }
+    function alDesplazar() {
+      if (frame) return;
+      frame = requestAnimationFrame(actualizar);
+    }
+
+    actualizar();
+    window.addEventListener('scroll', alDesplazar, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', alDesplazar);
+      if (frame) cancelAnimationFrame(frame);
+    };
+  }, []);
 
   async function handleLogout() {
     await logout();
@@ -51,11 +106,15 @@ export function Layout() {
 
   return (
     <>
-      <nav className="navbar">
+      <nav className="navbar" ref={navRef}>
         <div className="container navbar__inner">
-          <Brand />
+          <Link to="/" className="brand" aria-label="Néctar, ir al inicio">
+            <span className="brand__mark" aria-hidden>
+              <img src="/Néctar_Logo-02.png" alt="" />
+            </span>
+          </Link>
 
-          <ul className={cn('nav-links', open && 'nav-links--open')}>
+          <ul id="nav-links" className={cn('nav-links', open && 'nav-links--open')}>
             {enlaces.map((item) => (
               <li key={item.to}>
                 <NavLink
@@ -86,10 +145,10 @@ export function Layout() {
             ) : (
               <div className="auth-actions">
                 <Link to="/login" className="btn btn--outlined btn--sm" onClick={() => setOpen(false)}>
-                  Login
+                  Iniciar sesión
                 </Link>
                 <Link to="/registro" className="btn btn--primary btn--sm" onClick={() => setOpen(false)}>
-                  Sign up
+                  Crear cuenta
                 </Link>
               </div>
             )}
@@ -108,6 +167,7 @@ export function Layout() {
               type="button"
               className="nav-toggle"
               aria-expanded={open}
+              aria-controls="nav-links"
               aria-label={open ? 'Cerrar menú de navegación' : 'Abrir menú de navegación'}
               onClick={() => setOpen((value) => !value)}
             >

@@ -742,13 +742,20 @@
   background: rgba(248, 247, 240, 0.82);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border-soft);
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Con scroll la barra se vuelve más opaca y gana profundidad. */
+.navbar.scrolled {
+  background: rgba(248, 247, 240, 0.96);
+  box-shadow: var(--shadow-md);
 }
 
 .navbar__inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-5);
+  gap: var(--space-3);
   min-height: var(--nav-height);
 }
 
@@ -762,17 +769,22 @@
 .brand:hover { color: var(--text-strong); }
 
 .brand__mark {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: 13px;
-  background: var(--primary-600);
-  color: var(--tertiary-400);
-  font-size: 1.15rem;
-  box-shadow: var(--shadow-sm);
+  overflow: hidden;
   flex: 0 0 auto;
+}
+
+/* El PNG del logo trae márgenes transparentes: se amplía y recorta para que el
+   arte (la "N" con la hoja) ocupe toda la altura de la marca. */
+.brand__mark img {
+  display: block;
+  height: 127%;
+  width: auto;
+  max-width: none;
 }
 
 .brand__name {
@@ -790,15 +802,20 @@
   color: var(--text-muted);
 }
 
+/* Se oculta el eslogan "Red de polinizadores" solo en la navbar (se conserva en el pie). */
+.navbar .brand__tag {
+  display: none;
+}
+
 .nav-links {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  flex-wrap: wrap;
+  gap: 2px;
+  flex-wrap: nowrap;
 }
 
 .nav-link {
-  padding: 0.5rem 0.8rem;
+  padding: 0.5rem;
   border-radius: var(--radius-pill);
   font-size: var(--text-sm);
   font-weight: 600;
@@ -1330,28 +1347,84 @@
   word-break: break-all;
 }
 
-@media (max-width: 860px) {
-  .seal-hero { grid-template-columns: minmax(0, 1fr); }
+/* Navegación plegable: el menú pasa a un desplegable cuando los módulos ya no
+   caben en una sola línea. Se mantiene fuera de la barra y se puede desplazar. */
+@media (max-width: 1200px) {
   .nav-toggle { display: inline-flex; }
 
   .nav-links {
     position: absolute;
-    top: var(--nav-height);
+    top: 100%;
     left: 0;
     right: 0;
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-1);
+    margin: 0;
     padding: var(--space-4);
     background: var(--bg-surface);
     border-bottom: 1px solid var(--border-soft);
     box-shadow: var(--shadow-md);
+    max-height: calc(100dvh - var(--nav-height));
+    overflow-y: auto;
     display: none;
+    z-index: 60;
   }
 
   .nav-links--open { display: flex; }
 
-  .nav-link { padding: 0.7rem 0.9rem; border-radius: var(--radius-sm); }
+  .nav-links > li { width: 100%; }
+
+  .nav-link {
+    display: block;
+    padding: 0.75rem 0.9rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .nav-link--active { border-radius: var(--radius-sm); }
+}
+
+@media (max-width: 860px) {
+  .seal-hero { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Teléfonos: se compactan la marca, los controles y la sesión. */
+@media (max-width: 640px) {
+  .navbar__inner { gap: var(--space-2); }
+
+  .brand__mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .navbar__actions { gap: var(--space-1); }
+
+  .theme-toggle,
+  .nav-toggle {
+    width: 38px;
+    height: 38px;
+  }
+
+  .auth-chip {
+    gap: var(--space-1);
+    padding: 0.2rem 0.3rem 0.2rem 0.55rem;
+  }
+
+  .auth-chip__rol { display: none; }
+  .auth-chip__name { max-width: 8ch; }
+  .auth-chip__logout { padding: 0.28rem 0.6rem; }
+
+  .auth-actions { gap: var(--space-1); }
+  .auth-actions .btn {
+    padding: 0.4rem 0.6rem;
+    font-size: var(--text-xs);
+  }
+}
+
+/* Pantallas muy estrechas: se conserva "Iniciar sesión" (el registro queda a un
+   toque desde esa página) y se evita que la barra se desborde. */
+@media (max-width: 480px) {
+  .auth-actions .btn--primary { display: none; }
 }
 
 @media (max-width: 680px) {
@@ -1368,6 +1441,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  margin-left: auto;
   flex: 0 0 auto;
 }
 
@@ -1467,6 +1541,21 @@
 
 [data-theme='dark'] .navbar {
   background: rgba(16, 19, 14, 0.82);
+}
+
+[data-theme='dark'] .navbar.scrolled {
+  background: rgba(16, 19, 14, 0.94);
+}
+
+/* Tema oscuro · textos de la navbar en blanco (marca, módulos y acciones).
+   Se acota a .navbar para no afectar a otros enlaces del sitio. */
+[data-theme='dark'] .navbar .brand,
+[data-theme='dark'] .navbar .nav-link,
+[data-theme='dark'] .navbar .nav-link:hover,
+[data-theme='dark'] .navbar .nav-link--active,
+[data-theme='dark'] .navbar .auth-actions .btn,
+[data-theme='dark'] .navbar .auth-actions .btn:hover {
+  color: #fff;
 }
 
 /* Chip de sesión en tema oscuro */

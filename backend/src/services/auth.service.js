@@ -24,7 +24,7 @@ export const ROLES = ['usuario', 'administrador', 'auditor'];
 export const CLAVE_MAESTRA = 'admin1234';
 
 // Longitud mínima y máxima de la contraseña de una cuenta de usuario.
-const MIN_PASSWORD = 6;
+const MIN_PASSWORD = 8;
 const MAX_PASSWORD = 100;
 // Longitud máxima del nombre de usuario.
 const MAX_USERNAME = 30;
@@ -82,6 +82,12 @@ export function registrarUsuario({ username, password } = {}) {
       400
     );
   }
+  if (!/[a-zA-Z]/.test(clave) || !/[0-9]/.test(clave)) {
+    throw new AuthError(
+      'La contraseña debe combinar letras y números.',
+      400
+    );
+  }
 
   const db = getDb();
   const existente = db.prepare('SELECT id FROM usuarios WHERE username = ?').get(nombre);
@@ -101,12 +107,13 @@ export function registrarUsuario({ username, password } = {}) {
 
 // ----------------------------------------------------------------------------
 // Inicio de sesión.
-// - rol 'usuario': se validan las credenciales contra la base de datos.
-// - rol maestros ('administrador' | 'auditor'): basta la contraseña maestra.
+// El formulario ya no envía rol: se infiere de la cuenta registrada en la base
+// (el usuario 'admin' tiene el rol 'administrador' y todos los permisos).
+// Se mantiene `rol` opcional por compatibilidad con clientes antiguos.
 // Devuelve { token, usuario }.
 // ----------------------------------------------------------------------------
 export function iniciarSesion({ username, password, rol } = {}) {
-  const rolElegido = String(rol ?? '').trim().toLowerCase();
+  const rolElegido = String(rol ?? '').trim().toLowerCase() || 'usuario';
   if (!ROLES.includes(rolElegido)) {
     throw new AuthError('Debes indicar un rol válido: usuario, administrador o auditor.', 400);
   }

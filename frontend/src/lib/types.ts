@@ -42,9 +42,8 @@ export interface AuthResponse {
 }
 
 export interface LoginInput {
-  username?: string;
+  username: string;
   password: string;
-  rol: Rol;
 }
 
 export interface RegistroInput {

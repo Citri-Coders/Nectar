@@ -29,8 +29,10 @@ export function Registro() {
     const errorUsuario = validarUsername(username);
     if (errorUsuario) nuevos.push(`Usuario: ${errorUsuario}`);
 
-    if (password.length < 6 || password.length > 100) {
-      nuevos.push('Contraseña: debe tener entre 6 y 100 caracteres.');
+    if (password.length < 8 || password.length > 100) {
+      nuevos.push('Contraseña: debe tener entre 8 y 100 caracteres.');
+    } else if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+      nuevos.push('Contraseña: debe combinar letras y números.');
     }
     if (password !== confirmacion) nuevos.push('Las contraseñas no coinciden.');
 
@@ -81,7 +83,7 @@ export function Registro() {
             label="Contraseña"
             htmlFor="password"
             required
-            hint="Mínimo 6 caracteres."
+            hint="Mínimo 8 caracteres, combinando letras y números."
           >
             <Input
               id="password"

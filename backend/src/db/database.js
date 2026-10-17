@@ -12,6 +12,7 @@
 // ============================================================================
 
 import { DatabaseSync } from 'node:sqlite';
+import { randomBytes, scryptSync } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,8 +62,42 @@ function connect() {
   // así los municipios/polinizadores nuevos se incorporan sin recrear la base.
   connection.exec(readFileSync(SEED_PATH, 'utf8'));
 
+  asegurarCuentaAdmin(connection);
+
   connection.exec(`PRAGMA user_version = ${SCHEMA_VERSION};`);
   return connection;
+}
+
+// ----------------------------------------------------------------------------
+// Cuenta de administrador interna.
+// Se crea de forma automática en la primera apertura de la base. Tiene el rol
+// 'administrador', por lo que da acceso total al proyecto (eliminar datos,
+// administrar el contenido, etc.).
+// ----------------------------------------------------------------------------
+function asegurarCuentaAdmin(connection) {
+  const username = 'admin';
+  const password = 'admin2004';
+
+  const existente = connection
+    .prepare('SELECT id, rol FROM usuarios WHERE username = ?')
+    .get(username);
+
+  if (existente) {
+    // Se garantiza que conserve el rol con todos los permisos.
+    if (existente.rol !== 'administrador') {
+      connection
+        .prepare("UPDATE usuarios SET rol = 'administrador' WHERE id = ?")
+        .run(existente.id);
+    }
+    return;
+  }
+
+  const salt = randomBytes(16).toString('hex');
+  const passwordHash = scryptSync(password, salt, 64).toString('hex');
+
+  connection
+    .prepare('INSERT INTO usuarios (username, password_hash, salt, rol) VALUES (?, ?, ?, ?)')
+    .run(username, passwordHash, salt, 'administrador');
 }
 
 /**
