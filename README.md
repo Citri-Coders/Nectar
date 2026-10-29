@@ -1,348 +1,364 @@
+# 🍯 Néctar LatAm
 
-### 5.2 Herramientas no-code
+> **Plataforma comunitaria de conservación de polinizadores nativos y agroecología en Latinoamérica.**  
+> *"Un modelo, mil paisajes. Una red, todo un continente."*
 
-| Componente | Herramienta | Costo |
-|------------|-------------|-------|
-| Landing | Carrd.co / Google Sites | Gratis |
-| App | Glide Apps / AppSheet | Gratis (plan básico) |
-| Dashboard | Looker Studio | Gratis |
-| Formulario | Google Forms | Gratis |
-| Base de datos | Google Sheets | Gratis |
-| Mapa | Google My Maps | Gratis |
-| Diseño | Canva | Gratis |
-| QR | qr-code-generator.com | Gratis |
-| Video | CapCut | Gratis |
-
-### 5.3 Base de datos central (Google Sheets)
-
-**Hoja 1 — Espacios registrados:**  
-ID, Nombre, Tipo, Municipio, País, Cultivo, Prácticas, Puntos, Certificación.
-
-**Hoja 2 — Prácticas:**  
-ID, Práctica, Escala, Puntos, Verificable.
-
-**Hoja 3 — Monitoreo:**  
-ID, Espacio, Fecha, Polinizador, Cantidad, Foto.
-
-**Hoja 4 — Planes generados:**  
-ID, Finca, Escala 1, Escala 2, Escala 3, Fecha.
+[![Node.js Version](https://img.shields.io/badge/Node.js-24.x-brightgreen.svg?logo=node.js)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/Frontend-React_18_%7C_Vite_5_%7C_TypeScript-61dafb.svg?logo=react)](https://react.dev/)
+[![Express](https://img.shields.io/badge/Backend-Express_4_(ESM)-black.svg?logo=express)](https://expressjs.com/)
+[![Database](https://img.shields.io/badge/Database-SQLite_Native_%2F_Turso_libSQL-008080.svg?logo=sqlite)](https://turso.tech/)
+[![Maps](https://img.shields.io/badge/Maps-Leaflet_%2B_OpenStreetMap-199900.svg?logo=leaflet)](https://leafletjs.com/)
+[![Deploy](https://img.shields.io/badge/Deploy-Vercel_Monorepo-black.svg?logo=vercel)](https://vercel.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
 ---
 
-## 6. Módulos de la plataforma
+## 📌 Tabla de Contenidos
 
-### 6.1 Néctar Diseño (técnicos y agrónomos)
-- Guía interactiva de diseño de paisaje.
-- Generador de planes de finca.
-- Biblioteca de especies nativas.
-- Calculadora de conectividad.
-
-### 6.2 Néctar Ciudadano (comunidades)
-- Registro de espacios.
-- Formulario de segmentación.
-- Plan de acción personalizado.
-- Registro de prácticas con fotos y geolocalización.
-- Monitoreo de polinizadores.
-- Gamificación: puntos, insignias, ranking.
-- Blog educativo.
-
-### 6.3 Néctar Municipio (autoridades)
-- Dashboard con mapa de espacios.
-- Indicadores de avance.
-- Certificación "Espacio Amigo de los Polinizadores".
-- Herramienta de decisión para priorizar intervenciones.
-
-### 6.4 Néctar Sello (productores y consumidores)
-- Sello "Polinizador Amigo" para productos que cumplan prácticas verificadas.
-- QR en el producto que lleva a la historia de la finca.
-- Adopción de metros cuadrados de hábitat.
-- Fondo comunitario para kits de plantas nativas y capacitación.
-
-### 6.5 Néctar Red (todos)
-- Conecta nodos regionales.
-- Comparte datos y estándares.
-- Facilita la replicación del modelo.
+1. [Visión General del Proyecto](#-visión-general-del-proyecto)
+2. [Arquitectura y Stack Tecnológico](#-arquitectura-y-stack-tecnológico)
+3. [Módulos de la Plataforma](#-módulos-de-la-plataforma)
+4. [Estructura del Repositorio](#-estructura-del-repositorio)
+5. [Instalación y Puesta en Marcha](#-instalación-y-puesta-en-marcha)
+6. [Variables de Entorno y Base de Datos](#-variables-de-entorno-y-base-de-datos)
+7. [Referencia de la API REST (v1)](#-referencia-de-la-api-rest-v1)
+8. [Autenticación, Seguridad y Roles](#-autenticación-seguridad-y-roles)
+9. [Despliegue en Producción (Vercel)](#-despliegue-en-producción-vercel)
+10. [Países y Cobertura Regional](#-países-y-cobertura-regional)
+11. [Créditos y Licencia](#-créditos-y-licencia)
 
 ---
 
-## 7. Formulario de segmentación y personalización
+## 🐝 Visión General del Proyecto
 
-### 7.1 Flujo del formulario
+En América Latina, la pérdida de hábitat, la deforestación y el uso intensivo de agroquímicos amenazan a las abejas nativas sin aguijón (*meliponas*), abejas solitarias, colibríes y mamíferos nectarívoros, cuya actividad sostiene hasta el 75% de los cultivos alimentarios esenciales (café, cacao, aguacate, frutales).
 
-**Paso 1 — Ubicación:** País, Departamento/Municipio, Comunidad, Zona (urbana, periurbana, rural) y un mapa interactivo para marcar el punto exacto del espacio (sin escribir latitud y longitud a mano).
-
-**Paso 2 — Tipo de espacio:** Finca agrícola, Patio o jardín, Terraza o balcón, Escuela, Parque o rotonda, Área comunal.
-
-**Paso 3 — Cultivo o vegetación:** Café, Cacao, Hortalizas, Frutales, Ornamentales, Sin cultivo.
-
-**Paso 4 — Clima / piso altitudinal:** Cálido seco (0-500 msnm), Cálido húmedo (0-800 msnm), Templado (800-1500 msnm), Frío (1500+ msnm).
-
-**Paso 5 — Resultado personalizado:**
-- Polinizador principal y secundario.
-- Plantas nativas recomendadas (5-8 especies).
-- Tipo de nido.
-- Calendario de floración.
-- Guía descargable en PDF.
-- Puntos iniciales (10 puntos).
-
-### 7.2 Ejemplo de especies nativas por país
-
-| País | Abejas sin aguijón | Abejas solitarias | Plantas nativas |
-|------|-------------------|-------------------|-----------------|
-| Nicaragua | Melipona beecheii, Trigona fulviventris | Xylocopa, Centris | Madero negro, Sacuanjoche, Flor de izote |
-| Colombia | Melipona compressipes, Tetragonisca angustula | Xylocopa, Centris | Guayacán, Carbonero, Chicalá |
-| Brasil | Melipona quadrifasciata, Tetragonisca | Xylocopa, Centris | Ipê, Aroeira, Jacarandá |
-| Argentina | Tetragonisca fiebrigi, Scaptotrigona jujuyensis | Xylocopa, Centris | Lapacho, Ceibo, Algarrobo |
-| Bolivia | Tetragonisca angustula, Melipona rufiventris | Xylocopa, Centris | Lapacho, Molle, Tara |
-| Chile | Manuelia postica, Manuelia gayi | Centris, Colletes | Quillay, Peumo, Boldo |
-| Costa Rica | Melipona beecheii, Tetragonisca angustula | Xylocopa, Centris | Poró, Guayacán real, Malinche |
-| El Salvador | Melipona beecheii, Trigona fulviventris | Xylocopa, Centris | Maquilishuat, Flor de izote, Bálsamo |
-| México | Melipona beecheii, Scaptotrigona pectoralis | Xylocopa, Centris | Guayacán, Primavera, Árbol de las manitas |
-| Paraguay | Tetragonisca fiebrigi, Scaptotrigona | Xylocopa, Centris | Lapacho, Yvyra pytã, Guayabo |
-| Venezuela | Melipona favosa, Tetragonisca angustula | Xylocopa, Centris | Araguaney, Bucare, Apamate |
+**Néctar LatAm** es una solución tecnológica integral y de código abierto que articula a **productores agrícolas**, **comunidades locales**, **científicos ciudadanos** y **gobiernos municipales** mediante:
+- **Asistencia bioclimática inteligente:** generación automatizada de planes de paisaje, selección de flora nativa y tipología de nidos según el piso altitudinal y coordenadas.
+- **Ciencia ciudadana y monitoreo:** georreferenciación de espacios y registro fotográfico de avistamientos de polinizadores.
+- **Gamificación comunitaria:** acumulación de puntos, distintivos de conservación y ranking colectivo.
+- **Gobernanza municipal:** cuadro de mando (*dashboard*) territorial con mapas interactivos de conectividad ecológica.
+- **Economía solidaria y certificación:** Sello *"Polinizador Amigo"* con trazabilidad por código QR y microadopción de metros cuadrados de hábitat floral.
 
 ---
 
-## 8. Blog educativo y contenidos
+## 🏗 Arquitectura y Stack Tecnológico
 
-El blog incluye artículos, guías y videos cortos. Contenidos base:
+El proyecto está organizado como un **monorepo fullstack** desacoplado, optimizado para ejecutarse tanto en desarrollo local como en arquitecturas *serverless* multi-instancia:
 
-| Artículo | Contenido | Fuente |
-|----------|-----------|--------|
-| ¿Por qué los polinizadores importan? | Alimentos que dependen de polinización animal | FAO, IPBES |
-| Polinizadores de Nicaragua y Latinoamérica | Especies nativas, hábitats, distribución | MARENA, MAG, Poli-LAC |
-| Amenazas y cómo reducirlas | Pesticidas, deforestación, monocultivos | IPBES, FAO |
-| Impacto económico de la pérdida de polinizadores | Pérdidas en cultivos, empleo, medios de vida | CEPAL, estudios de caso |
-| Guía de plantas nativas por región | Listado por país y piso climático | Colaboración con agrónomos |
-| Cómo construir un hotel de abejas | Paso a paso con materiales locales | Prácticas agroecológicas |
-| Manejo integrado de plagas (MIP) | Alternativas a pesticidas | Guías técnicas |
-| Kit de siembra Néctar | Qué incluye, cómo usarlo | Diseño propio |
+```mermaid
+graph TD
+    User([Usuario / Productor / Municipio]) -->|HTTPS / SPA| Frontend[Frontend: React 18 + Vite + Leaflet]
+    Frontend -->|Proxy / REST JSON| Backend[Backend: Express 4 ESM]
+    Backend -->|Sesiones HMAC / Crypto| Auth[Módulo Auth & Roles]
+    Backend -->|Persistencia Híbrida| DB[(Base de Datos)]
+    DB -.->|Local dev| SQLite[SQLite 3 nativo node:sqlite]
+    DB -.->|Producción / Cloud| Turso[Turso Cloud libSQL]
+    Backend -->|Módulos| Modulos[Ciudadano / Municipio / Sello / Biodiversidad]
+```
 
----
+### Componentes Principales
 
-## 9. Dashboard municipal
-
-| Indicador | Qué mide | Para qué sirve |
-|-----------|----------|----------------|
-| Espacios registrados | Número de fincas, patios, escuelas | Medir adopción |
-| Prácticas implementadas | Franjas florales, cercas vivas, nidos | Evaluar avance |
-| Polinizadores monitoreados | Avistamientos por especie | Medir biodiversidad |
-| Certificaciones emitidas | Fincas "Polinizador Amigo" | Reconocer esfuerzos |
-| Conectividad de microcuenca | Cercas vivas, corredores, parches | Planificar intervenciones |
-| Ranking de comunidades | Puntos acumulados | Incentivar participación |
-
----
-
-## 10. Sello y financiamiento
-
-### 10.1 Sello "Polinizador Amigo"
-- Formato circular.
-- Elementos: abeja, flor, manos o comunidad.
-- Texto: "Néctar LatAm — Polinizador Amigo — [País]".
-
-### 10.2 Mecanismo de financiamiento
-1. Cada espacio registrado y certificado genera datos verificables.
-2. Los datos se traducen en un índice de servicio ecosistémico.
-3. Empresas, gobiernos y consumidores compran créditos o adoptan metros cuadrados.
-4. Los fondos se distribuyen a las comunidades que mantienen los hábitats.
+| Capa | Tecnologías | Propósito |
+|---|---|---|
+| **Frontend** | React 18, TypeScript, Vite 5, React Router 6 | Interfaz web SPA rápida, reactiva y accesible. |
+| **Mapas** | Leaflet, OpenStreetMap, react-leaflet hooks | Selector interactivo de coordenadas (`LocationPicker`) y mapa de espacios/calor (`MapView`). |
+| **Estilos & UI** | CSS Puro con Design Tokens (`tokens.css`, `components.css`) | Paleta orgánica oficial: Verde bosque (`#1b533a`), Amarillo miel (`#facc15`), Marfil (`#f7f6f0`) y Tinta (`#142017`). Sin dependencias pesadas de UI. |
+| **Backend** | Node.js (24.x recomendado, >= 20.x), Express 4 (ESM), Morgan, CORS | API REST robusta, modular (controladores, repositorios, servicios y middlewares) y respuestas 100% en formato JSON. |
+| **Persistencia** | Dual: `node:sqlite` (local) + `@libsql/client` (Turso Cloud) | Base de datos relacional con esquema jerárquico (`País > Municipio > Polinizador`). |
+| **Seguridad** | `node:crypto` (`scrypt` + firmas HMAC-SHA256) | Hashing con sal para usuarios y tokens de sesión autocontenidos (stateless), resistentes a reinicios de contenedores serverless. |
+| **Hosting** | Vercel | Monorepo con despliegue unificado o servicios separados mediante `vercel.json` e `index.js`. |
 
 ---
 
-## 11. Escalabilidad regional: modelo modular replicable
+## 📦 Módulos de la Plataforma
 
-### 11.1 Kit de replicación
-- Metodología base: diseño de paisaje en tres escalas, protocolo de monitoreo, marco de gobernanza, estándares de datos.
-- Módulos por cultivo: café, cacao, aguacate, arándano, maracuyá, tomate.
-- Variables locales adaptables: piso climático, especies nativas, contexto cultural, marco legal, idioma.
+### 1. 🌿 Néctar Ciudadano
+* **Asistente de Segmentación en 5 Pasos (`/segmentacion`):**
+  1. *Ubicación geográfica:* selección interactiva de país, departamento/municipio y punto exacto sobre mapa Leaflet.
+  2. *Tipo de espacio:* finca agrícola, patio/jardín, terraza/balcón, escuela, parque/rotonda o área comunal.
+  3. *Vegetación o cultivo:* café, cacao, frutales, hortalizas, plantas ornamentales o sin cultivo.
+  4. *Piso altitudinal:* cálido seco (0-500 msnm), cálido húmedo (0-800 msnm), templado (800-1500 msnm) o frío (1500+ msnm).
+  5. *Plan personalizado:* asignación automática de polinizadores focales, 5 a 8 plantas nativas recomendadas con calendario de floración, especificación de nidos/hoteles de abejas y 10 puntos de bienvenida.
+* **Directorio de Espacios (`/espacios` y `/espacios/:id`):** consulta de fichas técnicas con mapa de ubicación, historial de monitoreo y detalle agroecológico.
+* **Monitoreo de Campo (`/monitoreo`):** formulario para reportar avistamientos de insectos, aves o mamíferos, validación de evidencia fotográfica y herencia de coordenadas del espacio registrado (+15 puntos).
+* **Gamificación y Ranking (`/ranking`):** tabla de posiciones comunitaria, cálculo dinámico de niveles y condecoraciones.
 
-### 11.2 Ejemplo de expansión
-- **Nicaragua:** Néctar Café en Matagalpa.
-- **Colombia:** Néctar Café en Huila (especies locales).
-- **Brasil:** Néctar Café en Minas Gerais (portugués).
-- **Argentina, Bolivia, Chile, Paraguay y Venezuela:** pilotos de Néctar Café y Néctar Frutales con meliponas y abejas solitarias del Cono Sur.
-- **Costa Rica, El Salvador y México:** Néctar Café y Néctar Cacao con meliponas locales (Melipona beecheii).
+### 2. 🏛 Néctar Municipio (`/municipio`)
+* Panel de control territorial diseñado para alcaldías y técnicos ambientales.
+* Catálogo de municipios organizado por países de la región.
+* Indicadores clave (KPIs): espacios registrados, prácticas agroecológicas implementadas, avistamientos verificados y certificaciones.
+* Mapa satelital/topográfico de dispersión territorial para priorizar corredores biológicos e intervenciones de conservación.
 
-**El método es el mismo. El contenido se adapta.**
+### 3. 🏷 Néctar Sello — "Polinizador Amigo" (`/sello`)
+* **Directorio de Productores Certificados:** vitrina pública de fincas comprometidas con la eliminación de agroquímicos tóxicos y preservación de parches florales.
+* **Verificación Pública QR (`/sello/verificar/:slug`):** ficha de trazabilidad accesible por los consumidores escaneando el empaque del producto.
+* **Adopción de Hábitats:** pasarela solidaria para que ciudadanos y empresas adopten metros cuadrados de refugio floral, financiando kits de siembra y capacitación campesina.
 
----
-
-## 12. Impacto social y ambiental
-
-### 12.1 Impacto social
-- **Seguridad alimentaria:** más polinizadores = mejor producción de frutas, hortalizas y café.
-- **Empoderamiento comunitario:** escuelas, vecinos y productores se apropian del monitoreo.
-- **Gobernanza local:** municipios usan datos para decisiones públicas.
-- **Economía solidaria:** consumidores apoyan directamente a comunidades.
-- **Justicia ambiental y de género:** protege biodiversidad y reconoce el rol de las mujeres.
-
-### 12.2 Impacto ambiental
-- Aumento de poblaciones de polinizadores nativos.
-- Restauración de conectividad ecológica.
-- Reducción del uso de agroquímicos.
-- Conservación de suelo y agua.
-
----
-
-## 13. Viabilidad técnica y económica
-
-### 13.1 Viabilidad técnica
-- Uso de herramientas no-code gratuitas.
-- Funcionamiento offline-first.
-- Escalabilidad horizontal (más módulos, más países).
-- Bajo requerimiento de infraestructura.
-
-### 13.2 Prefactibilidad económica
-- Costos de implementación mínimos (solo teléfonos y conectividad básica).
-- Modelo de financiamiento sostenible: sello, adopción de hábitats, fondos comunitarios.
-- Beneficios económicos por aumento de rendimientos agrícolas.
+### 4. 📚 Biodiversidad y Catálogo Néctar (`/especies` y `/polinizadores`)
+* Catálogo botánico de plantas nativas nectaríferas por país y piso climático.
+* Catálogo faunístico especializado en polinizadores nativos:
+  - **Abejas sin aguijón (Meliponini):** *Melipona beecheii*, *Tetragonisca angustula*, *Scaptotrigona*, *Trigona fulviventris*, etc.
+  - **Abejas solitarias:** *Xylocopa*, *Centris*, *Manuelia postica*, etc.
+  - **Aves nectarívoras:** Colibríes (*Trochilidae*).
+  - **Mamíferos nectarívoros:** Murciélagos glosofaginos (*Glossophaga soricina*) y marsupiales nativos (*Monito del monte*).
 
 ---
 
-## 14. Innovación y diferenciación
+## 📂 Estructura del Repositorio
 
-| Solución existente | Limitación | Cómo la supera Néctar LatAm |
-|-------------------|------------|----------------------------|
-| iNaturalist | Sin gobernanza ni incentivos económicos | Integra ciencia ciudadana, certificación municipal y sello productivo |
-| Poli-LAC | Dependiente de fondos, sin plataforma unificada | Plataforma digital abierta, replicable por cualquier municipio |
-| Operación Polinizador | Solo agrícola, sin componente urbano | Conecta campo y ciudad, productores y consumidores |
-| AgriSound / Api Robotics | Hardware costoso, enfoque comercial | Cero hardware, usa teléfonos existentes, enfoque social |
-
-**Innovación clave:** modelo modular replicable que une ciencia ciudadana + certificación + financiamiento solidario.
-
----
-
-## 15. Prototipo y validación en 28 horas
-
-### 15.1 Componentes a construir
-| Componente | Herramienta | Tiempo |
-|------------|-------------|--------|
-| Landing page | Carrd / Google Sites | 2 h |
-| App mockup funcional | Glide / AppSheet | 4 h |
-| Dashboard municipal | Looker Studio + Sheets | 3 h |
-| Mapa interactivo | Google My Maps | 2 h |
-| Generador de plan de paisaje | Sheets + Forms | 3 h |
-| Blog educativo | Google Sites | 2 h |
-| Sello y QR | Canva + generador QR | 1 h |
-| Video 2 min | CapCut | 4 h |
-| Interacción TikTok | TikTok | 2 h |
-| Reporte pautado | Google Docs + APA | 6 h |
-| Ensayos y ajustes | — | 2 h |
-
-### 15.2 Validación
-- Prueba del formulario con datos reales de una finca piloto.
-- Simulación de registro y monitoreo.
-- Verificación de la app en dispositivos móviles.
-- Revisión de enlaces y entregables en SIRLI.
-
----
-
-## 16. Plan de trabajo y cronograma
-
-### 16.1 Roles del equipo
-| Rol | Responsabilidad |
-|-----|-----------------|
-| Líder | Coordinación, decisiones, pitch final |
-| Ing. Sistemas A | App Glide + base de datos Sheets |
-| Ing. Sistemas B | Dashboard Looker Studio + mapa |
-| Ing. Sistemas C | Generador de plan de paisaje + integración |
-| Marketing A | Landing page + narrativa + sello |
-| Marketing B | Video 2 min + TikTok |
-| Marketing C | Reporte pautado + citas APA + declaración IA |
-| Apoyo | Investigación, diseño, ensayos |
-
-### 16.2 Cronograma de 28 horas
-| Hora | Actividad | Responsable |
-|------|-----------|-------------|
-| 0-1 | Apertura, lectura de desafíos, confirmación de equipo | Todos |
-| 1-2 | Selección del desafío 03. Lluvia de ideas. Definición de Néctar LatAm | Todos |
-| 2-4 | Investigación de antecedentes. Citas APA. Definición de módulos | Marketing C + Apoyo |
-| 4-6 | **Entregable 1:** Confirmar equipo en SIRLI. Iniciar interacción TikTok | Líder |
-| 6-8 | Diseño de arquitectura. Creación de Google Sheets base | Ing. Sistemas A, B, C |
-| 8-10 | Construcción de app Glide | Ing. Sistemas A |
-| 10-12 | Dashboard Looker Studio. Mapa interactivo | Ing. Sistemas B |
-| 12-14 | Generador de plan de paisaje. Integración con Sheets | Ing. Sistemas C |
-| 14-16 | Landing page. Sello. QR. Narrativa visual | Marketing A |
-| 16-18 | **Entregable 2:** Guion del video 2 min. Grabación | Marketing B |
-| 18-20 | Reporte pautado: estructura, redacción, citas | Marketing C + Apoyo |
-| 20-22 | Edición del video. Integración de pantallas | Marketing B |
-| 22-24 | **Entregable 3:** Subir video a YouTube. TikTok. Reporte PDF a SIRLI | Líder + Marketing |
-| 24-26 | Ensayo del pitch. Preparación de respuestas | Todos |
-| 26-27 | Ajustes finales. Verificación de entregables | Líder |
-| 27-28 | Entrega final. Cierre | Todos |
+```text
+Nectar/
+├── backend/                  # API REST Express (ESM)
+│   ├── db/                   # Scripts SQL y base SQLite local
+│   │   ├── schema.sql        # Esquema de tablas, índices y vistas
+│   │   ├── seed.sql          # Datos iniciales (países, municipios, polinizadores)
+│   │   └── nectar.sqlite     # Base local SQLite (generada al iniciar)
+│   ├── src/
+│   │   ├── app.js            # Configuración de Express, middlewares y rutas
+│   │   ├── server.js         # Arranque del servidor HTTP (puerto 3000 por defecto)
+│   │   ├── controllers/      # Controladores de peticiones HTTP
+│   │   ├── routes/           # Definición de rutas v1 de la API
+│   │   ├── services/         # Lógica de negocio (auth, conectividad, gamificación, etc.)
+│   │   ├── repositories/     # Consultas y acceso a la capa de datos
+│   │   ├── data/             # Datos base en memoria y catálogos
+│   │   ├── middleware/       # Middlewares de autenticación y validación
+│   │   └── utils/            # Normalización de texto, validadores y helpers
+│   └── package.json
+├── frontend/                 # Aplicación SPA (React 18 + Vite + TS)
+│   ├── public/               # Recursos estáticos
+│   ├── src/
+│   │   ├── App.tsx           # Enrutamiento principal y guards de sesión
+│   │   ├── main.tsx          # Punto de entrada de React
+│   │   ├── components/       # Layout, MapView, LocationPicker y UI reusable
+│   │   │   └── ui/           # Botones, tarjetas, alertas, insignias, inputs
+│   │   ├── hooks/            # Custom hooks (useApi)
+│   │   ├── lib/              # Cliente HTTP, auth context, validaciones, formato
+│   │   ├── pages/            # Vistas correspondientes a cada módulo
+│   │   └── styles/           # Tokens CSS de marca y componentes base
+│   ├── tsconfig.json
+│   ├── vite.config.ts        # Configuración de Vite con proxy hacia /api
+│   └── package.json
+├── scripts/                  # Scripts de automatización y despliegue
+│   ├── copy-frontend.mjs     # Copia del build estático del frontend
+│   └── turso-init.mjs        # Inicializador de schema y seed en Turso (Cloud)
+├── index.js                  # Entrypoint principal para Vercel Serverless
+├── vercel.json               # Configuración de despliegue y rewrites en Vercel
+├── package.json              # Scripts raíz del monorepo
+├── Néctar LatAm.md           # Memoria técnica y propuesta original
+└── README.md                 # Este documento
+```
 
 ---
 
-## 17. Entregables: video, TikTok, pitch
+## 🚀 Instalación y Puesta en Marcha
 
-### 17.1 Video de 2 minutos (YouTube)
-| Tiempo | Escena | Contenido |
-|--------|--------|-----------|
-| 0:00-0:15 | Problema | Paisajes degradados, abejas desapareciendo. Voz en off: "En Latinoamérica, nuestros polinizadores están desapareciendo." |
-| 0:15-0:35 | Contexto | Mapa de la región. "Nicaragua. Café. Abejas nativas. Un problema que se repite." |
-| 0:35-1:00 | Solución | Néctar LatAm. Pantallas de la app, dashboard, generador de planes. "Una red que conecta comunidades, productores y municipios." |
-| 1:00-1:20 | Cómo funciona | Los cinco módulos. Diseño de paisaje en tres escalas. "Diseñamos, monitoreamos, certificamos y financiamos." |
-| 1:20-1:40 | Impacto | Testimonios o datos. "Más polinizadores, más café, más comunidad." |
-| 1:40-1:55 | Escalabilidad | Mapa de Latinoamérica con módulos. "Un modelo, mil paisajes. Una red, todo un continente." |
-| 1:55-2:00 | Cierre | Logo, eslogan, llamado a la acción. |
+### Prerrequisitos
+- **Node.js:** Versión `20.x` o superior (se recomienda **Node.js 24.x**).
+- **npm:** Versión `10.x` o superior.
 
-### 17.2 Interacción internacional (TikTok)
-- **Reto:** "La danza de la polinización".
-- **Dinámica:** Cada equipo graba a sus integrantes imitando el vuelo de una abeja nativa, pasando "polen" (un objeto) de una persona a otra. El video se corta y el otro equipo continúa la cadena.
-- **Hashtag:** #RallyLatam2026 + nombre de ambos equipos.
-- **Duración:** 1 minuto máximo.
-- **Mensaje:** "La polinización no conoce fronteras. Néctar LatAm tampoco."
+### 1. Clonar el Repositorio
+```bash
+git clone https://github.com/Citri-Coders/Nectar.git
+cd Nectar
+```
 
-### 17.3 Pitch ante jurados (3-5 minutos)
-1. **Gancho (30 s):** "Un litro de miel requiere un millón de flores visitadas. Un café necesita 100 abejas por planta. En Latinoamérica, esas abejas están desapareciendo."
-2. **Problema (30 s):** Pérdida de polinizadores, falta de herramientas, ausencia de incentivos.
-3. **Solución (1 min):** Néctar LatAm. Demostración en vivo de la app y dashboard.
-4. **Diferenciación (1 min):** Modelo modular replicable. No es una app, es un método.
-5. **Impacto (1 min):** Social, económico, ambiental. Piloto en Matagalpa, escalable a la región.
-6. **Cierre (30 s):** "Un modelo, mil paisajes. Una red, todo un continente."
+### 2. Instalación de Dependencias
+
+Puedes instalar las dependencias del backend y frontend de forma individual:
+
+```bash
+# Dependencias raíz y backend
+npm install
+npm --prefix backend install
+
+# Dependencias del frontend
+npm --prefix frontend install
+```
 
 ---
 
-## 18. Conclusiones
+## ⚙️ Variables de Entorno y Base de Datos
 
-Néctar LatAm ofrece una solución integral, innovadora y replicable al desafío de proteger y fomentar los polinizadores nativos en Latinoamérica. Al combinar conocimiento agronómico, tecnología accesible y participación comunitaria, se convierte en un modelo escalable que puede adaptarse a diferentes cultivos y regiones. Su enfoque en impacto social garantiza beneficios tangibles para comunidades, productores y municipios, mientras que su diseño de bajo costo asegura sostenibilidad y adopción masiva.
+### Modo Local (SQLite nativo)
+Por defecto, si no configuras credenciales de Turso, el backend utiliza el módulo nativo `node:sqlite` de Node.js creando automáticamente la base de datos con su esquema y catálogo inicial en `backend/db/nectar.sqlite`.
 
----
+Para inicializar la base de datos localmente:
+```bash
+npm run db:init
+```
 
-## 19. Referencias (APA 7)
+### Modo Nube (Turso / libSQL)
+Para entornos de producción o persistencia compartida en la nube, crea un archivo `.env` en la raíz del proyecto (o en `backend/.env`):
 
-- FAO. (2019). *The State of the World's Biodiversity for Food and Agriculture*. Roma: FAO.
-- IPBES. (2016). *The Assessment Report on Pollinators, Pollination and Food Production*. Bonn: IPBES.
-- GIZ/FAO. (2022). *Proyecto Poli-LAC: Acción Regional para la Protección de los Insectos Polinizadores*. 
-- MARENA. (2023). *Biodiversidad de Nicaragua: Especies polinizadoras*. Managua: MARENA.
-- CEPAL. (2021). *Impacto económico de la pérdida de polinizadores en América Latina*. Santiago: CEPAL.
-- Operación Polinizador. (2020). *Márgenes florales en café: Resultados y lecciones aprendidas*. Colombia.
-- iNaturalist. (2024). *Plataforma de ciencia ciudadana*. https://www.inaturalist.org
-- AgriSound. (2023). *Polly™: Sensor bioacústico para monitoreo de polinizadores*. 
-- Beesound. (2022). *Identificación de abejas nativas por sonido*. Chile.
-- Api Robotics. (2023). *Colmenas tecnificadas con IA*. Perú.
+```env
+PORT=3000
+TURSO_DATABASE_URL=libsql://tu-base-de-datos.turso.io
+TURSO_AUTH_TOKEN=tu-token-de-autenticacion-turso
+```
 
----
+Para aplicar el esquema e insertar los datos semilla en Turso:
+```bash
+npm run db:turso:init
+```
 
-## 20. Declaración de uso de IA
-
-Para la elaboración de este informe se utilizaron herramientas de inteligencia artificial con las siguientes finalidades:
-
-- **Investigación de antecedentes:** asistencia en la búsqueda y síntesis de información sobre polinizadores y soluciones existentes.
-- **Redacción y corrección de estilo:** apoyo en la claridad y coherencia del texto.
-- **Generación de ideas:** brainstorming inicial para la definición de módulos y funcionalidades.
-
-Todos los datos, citas y afirmaciones fueron verificados por el equipo con fuentes reales. La IA no sustituyó el criterio, la comprensión ni las decisiones del equipo.
-
----
-
-## Anexos
-
-- Capturas de pantalla de la landing page, app y dashboard.
-- Enlaces a la plataforma y video.
-- QR del sello "Polinizador Amigo".
-- Plantillas de Google Sheets y Forms.
+### Variables del Frontend (Opcional)
+En `frontend/.env`:
+```env
+# Por defecto Vite proxea /api hacia localhost:3000
+VITE_API_URL=http://localhost:3000/api/v1
+```
 
 ---
 
-**Néctar LatAm**  
-*Un modelo, mil paisajes. Una red, todo un continente.*
+## 💻 Ejecución en Desarrollo
+
+Puedes ejecutar ambos entornos simultáneamente en terminales separadas:
+
+### Terminal 1 — Backend (API)
+```bash
+npm run dev
+# o directamente en backend:
+cd backend && npm run dev
+```
+> El servidor iniciará en: `http://localhost:3000`
+
+### Terminal 2 — Frontend (Vite)
+```bash
+cd frontend && npm run dev
+```
+> La aplicación web abrirá en: `http://localhost:5173`
+
+*(Nota: Vite incluye un proxy preconfigurado en `vite.config.ts` que redirige automáticamente todas las peticiones `/api/*` al backend en el puerto 3000, evitando problemas de CORS).*
+
+---
+
+## 📡 Referencia de la API REST (v1)
+
+Todas las respuestas se devuelven en formato `application/json`. La ruta base de la API es `/api/v1`.
+
+### Endpoints Generales
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/health` | Público | Comprobación de estado del servicio (*health check*). |
+| `GET` | `/api/v1` | Público | Índice con el mapa y descubrimiento de endpoints disponibles. |
+
+### Autenticación (`/api/v1/auth`)
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `POST` | `/api/v1/auth/registro` | Público | Registra un nuevo usuario con credenciales seguras. |
+| `POST` | `/api/v1/auth/login` | Público | Inicia sesión (usuario, administrador o auditor) y emite token HMAC. |
+| `POST` | `/api/v1/auth/logout` | Público | Cierra la sesión activa. |
+| `GET` | `/api/v1/auth/me` | Sesión | Devuelve el perfil y rol del usuario autenticado. |
+
+### Espacios y Segmentación (`/api/v1/spaces`)
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/spaces` | Sesión | Lista los espacios registrados (admite filtros `?pais=` y `?tipo=`). |
+| `GET` | `/api/v1/spaces/:id` | Sesión | Obtiene el detalle completo y coordenadas de un espacio. |
+| `POST` | `/api/v1/spaces/segmentation` | Sesión | Procesa el formulario de 5 pasos y genera el plan agroecológico. |
+| `DELETE` | `/api/v1/spaces/:id` | Admin | Elimina un espacio registrado del sistema. |
+
+### Monitoreo Ciudadano (`/api/v1/monitoring`)
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `POST` | `/api/v1/monitoring` | Sesión | Registra un avistamiento geolocalizado con foto (+15 puntos). |
+| `GET` | `/api/v1/monitoring/space/:espacio_id` | Sesión | Historial de avistamientos asociados a un espacio. |
+| `DELETE` | `/api/v1/monitoring/:id` | Admin | Elimina un registro de monitoreo. |
+
+### Gamificación (`/api/v1/gamification`)
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/gamification/leaderboard` | Público | Tabla de clasificación de comunidades y productores por puntos. |
+
+### Módulo Municipal (`/api/v1/municipio`)
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/municipio/catalogo` | Sesión | Catálogo de municipios agrupados por países soportados. |
+| `GET` | `/api/v1/municipio/dashboard/:municipio` | Sesión | Métricas, KPIs y avances del municipio (`?pais=`). |
+| `GET` | `/api/v1/municipio/map-points/:municipio` | Sesión | Puntos georreferenciados para capas de mapa territorial. |
+
+### Sello y Financiamiento (`/api/v1/seal`)
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/seal/producers` | Público | Directorio de productores certificados con el Sello. |
+| `GET` | `/api/v1/seal/verify/:id_o_slug` | Público | Consulta pública de trazabilidad del Sello (código QR). |
+| `POST` | `/api/v1/seal/adopt` | Sesión | Registro de microfinanciamiento o adopción de metros cuadrados de hábitat. |
+
+### Biodiversidad y Especies (`/api/v1/species` y `/api/v1/biodiversidad`)
+| Método | Endpoint | Acceso | Descripción |
+|---|---|---|---|
+| `GET` | `/api/v1/species` | Público | Lista de plantas nativas (filtro `?pais=`, insensible a tildes). |
+| `GET` | `/api/v1/biodiversidad/paises` | Sesión | Lista de países registrados en la base de datos. |
+| `GET` | `/api/v1/biodiversidad/paises/:pais/municipios`| Sesión | Municipios asociados al país indicado. |
+| `GET` | `/api/v1/biodiversidad/municipios/:municipio/polinizadores`| Sesión | Polinizadores presentes en el municipio según su piso bioclimático. |
+| `GET` | `/api/v1/biodiversidad/catalogo` | Sesión | Catálogo global jerárquico (*País > Municipio > Polinizador*). |
+
+---
+
+## 🔐 Autenticación, Seguridad y Roles
+
+El sistema implementa tres niveles de rol para garantizar una gobernanza ordenada:
+
+| Rol | Registro / Acceso | Lectura | Inserción de Datos | Eliminación |
+|---|---|---|---|---|
+| **Usuario** | Registro autónomo (`/registro`). Password hasheada con `scrypt` + sal aleatoria. | Completa | Sí (espacios, monitoreo, adopciones) | No |
+| **Administrador** | Cuenta maestra institucional o usuario `admin`. | Completa | Sí | Sí (espacios y monitoreos) |
+| **Auditor** | Acceso institucional para veeduría y control. | Completa | No | No |
+
+* **Tokens de sesión:** Las sesiones utilizan tokens autocontenidos firmados criptográficamente mediante HMAC-SHA256 (`<payload base64url>.<firma>`). No requieren almacenamiento de estado en memoria ni tablas bloqueantes, permitiendo que la API escale perfectamente en instancias *serverless*.
+* **Manejo de Errores Uniforme:** Errores `400`, `401`, `403`, `404` y `500` siempre devuelven payloads JSON consistentes con descripciones legibles para el frontend.
+
+---
+
+## ☁️ Despliegue en Producción (Vercel)
+
+El repositorio está listo para ser desplegado en **Vercel** como un único proyecto:
+
+1. **Configuración (`vercel.json`):**
+   - Rutea las peticiones de `/api/(.*)` hacia el backend Express.
+   - Sirve la aplicación React estática optimizada para las rutas restantes.
+2. **Build unificado:**
+   ```bash
+   npm run build
+   ```
+   Compila el frontend con TypeScript + Vite (`dist/`) y ejecuta `scripts/copy-frontend.mjs` para preparar los estáticos.
+3. **Variables requeridas en el Dashboard de Vercel:**
+   - `TURSO_DATABASE_URL`: URL del cluster de Turso (`libsql://...`).
+   - `TURSO_AUTH_TOKEN`: Token de autenticación de Turso.
+
+---
+
+## 🌎 Países y Cobertura Regional
+
+Néctar LatAm soporta catálogos florales y faunísticos adaptados a los siguientes países:
+
+| País | Abejas Nativas Focales | Polinizadores Silvestres | Flora y Árboles Nativos |
+|---|---|---|---|
+| 🇳🇮 **Nicaragua** | *Melipona beecheii*, *Trigona fulviventris* | *Xylocopa*, *Centris* | Madero negro, Sacuanjoche, Flor de izote |
+| 🇨🇴 **Colombia** | *Melipona compressipes*, *Tetragonisca angustula* | *Xylocopa*, Colibríes andinos | Guayacán, Carbonero, Chicalá |
+| 🇧🇷 **Brasil** | *Melipona quadrifasciata*, *Tetragonisca* | *Centris*, Colibríes | Ipê, Aroeira, Jacarandá |
+| 🇦🇷 **Argentina** | *Tetragonisca fiebrigi*, *Scaptotrigona jujuyensis*| *Colletes*, *Xylocopa* | Lapacho, Ceibo, Algarrobo |
+| 🇧🇴 **Bolivia** | *Tetragonisca angustula*, *Melipona rufiventris* | *Centris*, Abejas solitarias | Lapacho, Molle, Tara |
+| 🇨🇱 **Chile** | *Manuelia postica*, *Manuelia gayi* | *Colletes*, *Centris* | Quillay, Peumo, Boldo |
+| 🇨🇷 **Costa Rica**| *Melipona beecheii*, *Tetragonisca angustula* | *Xylocopa*, Colibríes | Poró, Guayacán real, Malinche |
+| 🇸🇻 **El Salvador**| *Melipona beecheii*, *Trigona fulviventris* | *Xylocopa*, *Centris* | Maquilishuat, Flor de izote, Bálsamo |
+| 🇲🇽 **México** | *Melipona beecheii*, *Scaptotrigona pectoralis* | *Centris*, Murciélagos magueyeros| Guayacán, Primavera, Árbol de las manitas |
+| 🇵🇾 **Paraguay** | *Tetragonisca fiebrigi*, *Scaptotrigona* | *Xylocopa*, *Centris* | Lapacho, Yvyra pytã, Guayabo |
+| 🇻🇪 **Venezuela** | *Melipona favosa*, *Tetragonisca angustula* | *Xylocopa*, *Centris* | Araguaney, Bucare, Apamate |
+
+---
+
+## 👥 Equipo y Créditos
+
+Desarrollado por el equipo **Citri-Coders** en el marco del desafío de innovación agroecológica y conservación de polinizadores:
+
+- **Organización:** [Citri-Coders](https://github.com/Citri-Coders)
+- **Contacto:** `citricoders@gmail.com`
+- **Documento Conceptual & Memoria:** [Néctar LatAm.md](./Néctar%20LatAm.md)
+
+---
+
+## 📄 Licencia
+
+Este proyecto se distribuye bajo la licencia **MIT**. Consulta el archivo [LICENSE](./LICENSE) para más detalles.
